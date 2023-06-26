@@ -338,7 +338,7 @@ batch_kmeans(const RGB_Image* img, const int num_colors,
 			}
 
 			assign[i] = cluster_index; /*Store the assignment of the pixel to cluster in the array*/
-			
+			/*test commit*/
 			
 		}
 	}
