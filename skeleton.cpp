@@ -152,6 +152,7 @@ uint32_t bounded_rand(const uint32_t range)
 RGB_Image* 
 read_PPM(const char* filename)
 {
+	printf("GReading image...\n");
 	uchar byte;
 	char buff[16];
 	int c, max_rgb_val, i = 0;
@@ -280,6 +281,7 @@ write_PPM(const RGB_Image* img, const char* filename)
 /* Function to generate random cluster centers. */
 RGB_Cluster* 
 gen_rand_centers(const RGB_Image* img, const int k) {
+	printf("Generating random centers...\n");
 	RGB_Pixel rand_pixel;
 	RGB_Cluster* cluster;
 
@@ -314,6 +316,7 @@ batch_kmeans(const RGB_Image* img, const int num_colors,
 {
 	int num_pixels = img->size; /*Get the number of pixels in the image*/
 	int* assign = new int [num_pixels]; /*Array to store the assignment of each pixel to a cluster*/
+	double sse = 0.0; /*Variable to store SSE*/
 
 	/*Loop until the max number of iterations is hit : Terminate by iterations only*/
 	for (int iter = 0; iter < max_iters; iter++){
@@ -325,22 +328,52 @@ batch_kmeans(const RGB_Image* img, const int num_colors,
 
 			/*Calculate the Euclidean distance between the current pixel and current cluster*/
 			for (int j = 0; j < num_colors; j++){
-				double dist = sqrt(pow(img->data[i].red - clusters[j].center.red, 2) + 
-				pow(img->data[i].green - clusters[j].center.green, 2) + 
-				pow(img->data[i].blue - clusters[j].center.blue, 2));
+				double dist = (img->data[i].red - clusters[j].center.red * img->data[i].red - clusters[j].center.red) + 
+				(img->data[i].green - clusters[j].center.green * img->data[i].green - clusters[j].center.green) + 
+				(img->data[i].blue - clusters[j].center.blue * img->data[i].blue - clusters[j].center.blue);
 
 				/*Checking if this is the closest center*/
 				if (dist < min_dist){
 					min_dist = dist; /*Resetting min_dist*/
 					cluster_index = j; /*Assigning the closest pixel to a center*/
+					sse += dist;
 				}
+			}
+			assign[i] = cluster_index; /*Store the assignment of the pixel to cluster in the array*/
+			clusters[cluster_index].size++; /*Increase cluster size to make room for new pixel*/
+
+		}
+
+		/*Update cluster centers*/
+		for (int i = 0; i < num_colors; i++){
+			double red_sum = 0.0, green_sum = 0.0, blue_sum = 0.0; /*Storing the sum of the RGB values*/
+			int cluster_size = clusters[i].size; /*Getting the size of each cluster*/
+
+			/*Looping over each pixel*/
+			for (int j = 0; j < num_pixels; j++){
 				
+				/*If the pixel belongs to the cluster*/
+				if (assign[j] == i){
+					/*Sum up all the componenets of each pixel*/
+					red_sum += img->data[j].red; 
+					green_sum += img->data[j].green; 
+					blue_sum += img->data[j].blue; 
+				} 
 			}
 
-			assign[i] = cluster_index; /*Store the assignment of the pixel to cluster in the array*/
-			/*test commit*/
-			
+			/*Do not divide by zero*/
+			if (cluster_size > 0){ 
+			/*Updating the location of the cluster based on RGB elements*/
+			clusters[i].center.red = red_sum / cluster_size;
+			clusters[i].center.green = green_sum / cluster_size;
+			clusters[i].center.blue = blue_sum / cluster_size;
+			}
+
+			clusters[i].size = 0; /*Reset the cluster size for the next iteration*/
+
 		}
+		cout << "Iteration " << iter + 1 << ": " << "SSE = " << sse << endl;
+		sse = 0.0; /*Reset sse for next iteration*/
 	}
 }
 
@@ -361,7 +394,7 @@ main(int argc, char* argv[])
 	RGB_Image* img;
 	RGB_Image* out_img;
 	RGB_Cluster* cluster;
-
+	
 	if (argc == 3) {
 		/* Image filename */
 		filename = argv[1];
