@@ -281,7 +281,6 @@ write_PPM(const RGB_Image* img, const char* filename)
 /* Function to generate random cluster centers. */
 RGB_Cluster* 
 gen_rand_centers(const RGB_Image* img, const int k) {
-	printf("Generating random centers...\n");
 	RGB_Pixel rand_pixel;
 	RGB_Cluster* cluster;
 
@@ -315,7 +314,7 @@ batch_kmeans(const RGB_Image* img, const int num_colors,
 	const int max_iters, RGB_Cluster* clusters)
 {
 	int num_pixels = img->size; /*Get the number of pixels in the image*/
-	int* assign = new int [num_pixels]; /*Array to store the assignment of each pixel to a cluster*/
+	int* assign = new int[num_pixels]; /*Array to store the assignment of each pixel to a cluster*/
 	double sse = 0.0; /*Variable to store SSE*/
 
 	/*Loop until the max number of iterations is hit : Terminate by iterations only*/
@@ -328,20 +327,19 @@ batch_kmeans(const RGB_Image* img, const int num_colors,
 
 			/*Calculate the Euclidean distance between the current pixel and current cluster*/
 			for (int j = 0; j < num_colors; j++){
-				double dist = (img->data[i].red - clusters[j].center.red * img->data[i].red - clusters[j].center.red) + 
-				(img->data[i].green - clusters[j].center.green * img->data[i].green - clusters[j].center.green) + 
-				(img->data[i].blue - clusters[j].center.blue * img->data[i].blue - clusters[j].center.blue);
+				double dist = (img->data[i].red - clusters[j].center.red) * (img->data[i].red - clusters[j].center.red) + 
+				(img->data[i].green - clusters[j].center.green) * (img->data[i].green - clusters[j].center.green) + 
+				(img->data[i].blue - clusters[j].center.blue) * (img->data[i].blue - clusters[j].center.blue);
 
 				/*Checking if this is the closest center*/
 				if (dist < min_dist){
 					min_dist = dist; /*Resetting min_dist*/
 					cluster_index = j; /*Assigning the closest pixel to a center*/
-					sse += dist;
 				}
 			}
 			assign[i] = cluster_index; /*Store the assignment of the pixel to cluster in the array*/
 			clusters[cluster_index].size++; /*Increase cluster size to make room for new pixel*/
-
+			sse += min_dist; /*Accumulate the sse based on the euclidean distance of all pixels*/
 		}
 
 		/*Update cluster centers*/
