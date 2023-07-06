@@ -313,20 +313,21 @@ void
 batch_kmeans(const RGB_Image* img, const int num_colors,
 	const int max_iters, RGB_Cluster* clusters)
 {
-	printf("Starting Batch KMeans\n");
 	int num_pixels = img->size; /*Get the number of pixels in the image*/
 	int* assign = new int[num_pixels]; /*Array to store the assignment of each pixel to a cluster*/
-	double sse = 0.0; /*Variable to store SSE*/
+	double sse; /*Variable to store SSE*/
 	double delta_red, delta_green, delta_blue;
 	double dist;
 	RGB_Pixel pixel;
 	RGB_Cluster *temp_clusters;
-	cout << "Number of Pixels: " << num_pixels << endl;
+
 
 	temp_clusters = ( RGB_Cluster * ) malloc ( num_colors * sizeof ( RGB_Cluster ) );
 
 	/*Loop until the max number of iterations is hit : Terminate by iterations only*/
 	for (int iter = 0; iter < max_iters; iter++){
+		
+		sse = 0.0; /*Reset sse for next iteration*/
 
 		/*Reset the clusters for the next iteration*/
 		for (int j = 0; j < num_colors; j++){
@@ -336,12 +337,11 @@ batch_kmeans(const RGB_Image* img, const int num_colors,
 			temp_clusters[j].size = 0;
 			clusters[j].size = 0; 
 		}
-		//printf("Calculating Distance between pixels and centers\n");
 		/*Loop over all pixels and assign them to the nearest cluster*/
 		for(int i = 0; i < num_pixels; i++){
 			double min_dist = MAX_RGB_DIST; /*store the max distance in a variable*/
 			int cluster_index = 0;
-			pixel = img->data[i]; //Stopping here??
+			pixel = img->data[i];
 			
 			/*Calculate the Euclidean distance between the current pixel and current cluster*/
 			for (int j = 0; j < num_colors; j++){
@@ -349,7 +349,6 @@ batch_kmeans(const RGB_Image* img, const int num_colors,
 				delta_green = pixel.green - clusters[j].center.green;
 				delta_blue = pixel.blue - clusters[j].center.blue;
 				dist = delta_red * delta_red + delta_green * delta_green + delta_blue * delta_blue;
-				//cout << "Distance" << i << ": " << dist << endl;
 
 				/*Checking if this is the closest center*/
 				if (dist < min_dist){
@@ -365,46 +364,22 @@ batch_kmeans(const RGB_Image* img, const int num_colors,
 			temp_clusters[cluster_index].center.red += pixel.red;
 			temp_clusters[cluster_index].center.green += pixel.green;
 			temp_clusters[cluster_index].center.blue += pixel.blue;
-			temp_clusters[cluster_index].size += 1;
 		}
 
 		/*Update cluster centers*/
 		for (int j = 0; j < num_colors; j++){
-			// double red_sum = 0.0, green_sum = 0.0, blue_sum = 0.0; /*Storing the sum of the RGB values*/
-			int cluster_size = temp_clusters[j].size; /*Getting the size of each cluster*/
-
-			// /*Looping over each pixel*/
-			// for (int j = 0; j < num_pixels; j++){
-				
-			// 	/*If the pixel belongs to the cluster*/
-			// 	if (assign[j] == i){
-			// 		/*Sum up all the componenets of each pixel*/
-			// 		red_sum += img->data[j].red; 
-			// 		green_sum += img->data[j].green; 
-			// 		blue_sum += img->data[j].blue; 
-			// 	} 
-			// }
+			
+			int cluster_size = clusters[j].size; /*Getting the size of each cluster*/
 
 			/*Center update*/
-			if (cluster_size > 0){
-				clusters[j].center.red = temp_clusters[j].center.red / cluster_size;
-				clusters[j].center.green = temp_clusters[j].center.green / cluster_size;
-				clusters[j].center.blue = temp_clusters[j].center.blue / cluster_size;
-			}
-
-			// /*Do not divide by zero*/
-			// if (cluster_size > 0){ 
-			// /*Updating the location of the cluster based on RGB elements*/
-			// clusters[i].center.red = red_sum / cluster_size;
-			// clusters[i].center.green = green_sum / cluster_size;
-			// clusters[i].center.blue = blue_sum / cluster_size;
-			// }
-
+			clusters[j].center.red = temp_clusters[j].center.red / cluster_size;
+			clusters[j].center.green = temp_clusters[j].center.green / cluster_size;
+			clusters[j].center.blue = temp_clusters[j].center.blue / cluster_size;
 			
-			cout << "Cluster " << j + 1 << " Size:  " << clusters[j].size << endl;
 		}
+		
 		cout << "Iteration " << iter + 1 << ": " << "SSE = " << sse << endl;
-		sse = 0.0; /*Reset sse for next iteration*/
+
 	}
 }
 
