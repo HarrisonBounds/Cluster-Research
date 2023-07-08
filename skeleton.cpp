@@ -383,6 +383,76 @@ batch_kmeans(const RGB_Image* img, const int num_colors,
 	}
 }
 
+/*Maximin algorithm to initialize k-means*/
+RGB_Cluster *
+maximin(const RGB_Image* img, const int num_colors)
+	{	
+		int num_pixels = img->size;
+		double* d = new double[num_pixels];
+		RGB_Cluster *cluster;
+		RGB_Cluster centroid;
+		RGB_Pixel pixel;
+		double red_sum, green_sum, blue_sum;
+		double delta_red, delta_green, delta_blue;
+		double dist;
+		double max_dist;
+		int next_cluster;
+
+		/*Select the first center arbitrarily*/
+		for(int i = 0; i < num_pixels; i++){
+			pixel = img->data[i];
+			/*Sum the RGB components of the pixels*/
+			red_sum += pixel.red;
+			green_sum += pixel.green;
+			blue_sum += pixel.blue;
+		}
+
+		centroid.center.red = red_sum / num_pixels;
+		centroid.center.green = green_sum / num_pixels;
+		centroid.center.blue = blue_sum / num_pixels;
+
+		cluster[0] = centroid; /*Set the first center to the calculated centroid*/
+
+		/*Set distances to 'infinity'*/
+		for(int i = 0; i < num_pixels; i++){
+			d[i] = MAX_RGB_DIST;
+		}
+
+		/*Calculate the remaining centers*/
+		for(int j = 0; j < num_colors; j++){
+			max_dist = MAX_RGB_DIST; /*store the max distance in a variable*/
+			next_cluster = 0;
+			
+			/*Calculate the Euclidean distance between the current pixel and the previous cluster*/
+			for (int i = 0; i < num_pixels; i++){
+				pixel = img->data[i];
+
+				delta_red = cluster[j-1].center.red - pixel.red;
+				delta_green = cluster[j-1].center.green - pixel.green;
+				delta_blue = cluster[j-1].center.blue - pixel.blue;
+				dist = delta_red * delta_red + delta_green * delta_green + delta_blue * delta_blue;
+
+				/*Checking if this is the closest center*/
+				if (dist < d[i]){
+					d[i] = dist; /*Updating the distance between the pixel and closest center*/
+				}
+
+				/*Getting the furthest pixel away from the current center to choose as the next center*/
+				if (max_dist < d[i]){
+					max_dist = d[i];
+					next_cluster = j;
+				}
+
+				/*Assign the furthest pixel as a center*/
+				cluster[j].center = img->data[next_cluster];
+				cluster[j].size = 0; /*Reset cluster size to choose next center*/
+
+				return cluster;
+			}
+		}
+
+	}
+
 void
 free_img(const RGB_Image* img) {
 	/* Free Image Data*/
