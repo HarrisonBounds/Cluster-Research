@@ -422,7 +422,7 @@ maximin(const RGB_Image* img, const int num_colors)
 		}
 
 		/*Calculate the remaining centers*/
-		for(int j = 0; j < num_colors; j++){
+		for(int j = 0 + 1; j < num_colors; j++){ /*Start at one because we have already assigned the first center (cluster[0])*/
 			max_dist = -MAX_RGB_DIST; /*store the max distance in a variable*/
 			next_cluster = 0;
 			
