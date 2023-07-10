@@ -392,11 +392,13 @@ maximin(const RGB_Image* img, const int num_colors)
 		RGB_Cluster *cluster;
 		RGB_Cluster centroid;
 		RGB_Pixel pixel;
-		double red_sum, green_sum, blue_sum;
+		double red_sum = 0.0, green_sum = 0.0, blue_sum = 0.0;
 		double delta_red, delta_green, delta_blue;
 		double dist;
 		double max_dist;
 		int next_cluster;
+
+		cluster = ( RGB_Cluster * ) malloc ( num_colors * sizeof ( RGB_Cluster ) );
 
 		/*Select the first center arbitrarily*/
 		for(int i = 0; i < num_pixels; i++){
@@ -411,7 +413,12 @@ maximin(const RGB_Image* img, const int num_colors)
 		centroid.center.green = green_sum / num_pixels;
 		centroid.center.blue = blue_sum / num_pixels;
 
+		cout << "Here" << endl;
+
 		cluster[0] = centroid; /*Set the first center to the calculated centroid*/
+		cluster[0].size = 0;
+
+		cout << "Here 2" << endl;
 
 		/*Set distances to 'infinity'*/
 		for(int i = 0; i < num_pixels; i++){
@@ -420,7 +427,7 @@ maximin(const RGB_Image* img, const int num_colors)
 
 		/*Calculate the remaining centers*/
 		for(int j = 0; j < num_colors; j++){
-			max_dist = MAX_RGB_DIST; /*store the max distance in a variable*/
+			max_dist = -MAX_RGB_DIST; /*store the max distance in a variable*/
 			next_cluster = 0;
 			
 			/*Calculate the Euclidean distance between the current pixel and the previous cluster*/
@@ -440,17 +447,14 @@ maximin(const RGB_Image* img, const int num_colors)
 				/*Getting the furthest pixel away from the current center to choose as the next center*/
 				if (max_dist < d[i]){
 					max_dist = d[i];
-					next_cluster = j;
+					next_cluster = i;
 				}
-
+			}
 				/*Assign the furthest pixel as a center*/
 				cluster[j].center = img->data[next_cluster];
 				cluster[j].size = 0; /*Reset cluster size to choose next center*/
-
-				return cluster;
-			}
 		}
-
+				return cluster;
 	}
 
 void
