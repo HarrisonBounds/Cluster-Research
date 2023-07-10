@@ -413,12 +413,8 @@ maximin(const RGB_Image* img, const int num_colors)
 		centroid.center.green = green_sum / num_pixels;
 		centroid.center.blue = blue_sum / num_pixels;
 
-		cout << "Here" << endl;
-
 		cluster[0] = centroid; /*Set the first center to the calculated centroid*/
 		cluster[0].size = 0;
-
-		cout << "Here 2" << endl;
 
 		/*Set distances to 'infinity'*/
 		for(int i = 0; i < num_pixels; i++){
