@@ -395,7 +395,7 @@ janceys_kmeans(const RGB_Image* img, const int num_colors,
 		double dist;
 		RGB_Pixel pixel;
 		RGB_Cluster *temp_clusters;
-		double red_centroid, green_centroid, blue_centroid;
+		double red_centroid, prev_red_centroid, green_centroid, prev_green_centroid, blue_centroid, prev_blue_centroid;
 		int alpha = 1.8;
 
 
@@ -452,11 +452,14 @@ janceys_kmeans(const RGB_Image* img, const int num_colors,
 				red_centroid = temp_clusters[j].center.red / cluster_size;
 				green_centroid = temp_clusters[j].center.green / cluster_size;
 				blue_centroid = temp_clusters[j].center.blue / cluster_size;
+				prev_red_centroid = temp_clusters[j-1].center.red / cluster_size;
+				prev_green_centroid = temp_clusters[j-1].center.green / cluster_size;
+				prev_blue_centroid = temp_clusters[j-1].center.blue / cluster_size;
 
 				/*Update centers based on janceys kmeans using alpha*/
-				clusters[j].center.red = (alpha * red_centroid) + ((1 - alpha) * temp_clusters[j-1].center.red);
-				clusters[j].center.green = (alpha * green_centroid) + ((1 - alpha) * temp_clusters[j-1].center.green);
-				clusters[j].center.blue = (alpha * blue_centroid) + ((1 - alpha) * temp_clusters[j-1].center.blue);
+				clusters[j].center.red = (alpha * red_centroid) + ((1 - alpha) * prev_red_centroid);
+				clusters[j].center.green = (alpha * green_centroid) + ((1 - alpha) * prev_green_centroid);
+				clusters[j].center.blue = (alpha * blue_centroid) + ((1 - alpha) * prev_blue_centroid);
 
 
 				// /*Center update*/
