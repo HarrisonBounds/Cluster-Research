@@ -502,7 +502,10 @@ main(int argc, char* argv[])
 	std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
 
 	/* Initialize centers */
-    cluster = gen_rand_centers(img, k);
+    //cluster = gen_rand_centers(img, k);
+
+	/*Initialize centers using maximin*/
+	cluster = maximin(img, k);
 
 	/* Implement Batch K-means*/
 	batch_kmeans(img, k, INT_MAX, cluster);
