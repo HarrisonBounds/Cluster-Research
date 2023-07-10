@@ -600,7 +600,7 @@ main(int argc, char* argv[])
 	cluster = maximin(img, k);
 
 	/* Implement Batch K-means*/
-	batch_kmeans(img, k, INT_MAX, cluster);
+	janceys_kmeans(img, k, INT_MAX, cluster);
 
 	/* Stop Timer*/
 	std::chrono::high_resolution_clock::time_point stop = std::chrono::high_resolution_clock::now();
