@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <time.h>
 #include <float.h>
+#include <array>
 
 using namespace std;
 
@@ -383,6 +384,84 @@ batch_kmeans(const RGB_Image* img, const int num_colors,
 	}
 }
 
+/*Accelerated version of batch_kmeans*/
+void 
+tie_algorithm(const RGB_Image* img, const int num_colors,
+	const int max_iters, RGB_Cluster* clusters)
+	{
+		int num_pixels = img->size; /*Get the number of pixels in the image*/
+
+		int* l = new int[num_pixels]; /*Array to store the index of the pixel's nearest center*/
+		double* d = new double[num_colors]; /*Array to store the shortest distance between each center*/
+		int* p = new int[num_colors]; /*Array to store the indices of d in ascending order*/
+		int array_size;
+
+		double sse; /*Variable to store SSE*/
+		double delta_red, delta_green, delta_blue;
+		double dist;
+		RGB_Pixel pixel;
+		RGB_Cluster *temp_clusters;
+
+		temp_clusters = ( RGB_Cluster * ) malloc ( num_colors * sizeof ( RGB_Cluster ) );
+
+		/*Set each element in the index array to 1*/
+		for(int j = 0; j < num_pixels; j++){
+			l[j] = 1;
+		}
+
+		for (int iter = 0; iter < max_iters; iter++){
+
+			sse = 0.0; /*Reset sse for next iteration*/
+
+			/*Reset the clusters for the next iteration*/
+			for (int i = 0; i < num_colors; i++){
+				temp_clusters[i].center.red = 0.0;
+				temp_clusters[i].center.green = 0.0;
+				temp_clusters[i].center.blue = 0.0;
+				temp_clusters[i].size = 0;
+				clusters[i].size = 0; 
+			}
+
+			/*Computer pairwise distances between each center*/
+			for (int i = 0; i < num_colors; i++){
+				double min_dist = MAX_RGB_DIST; /*store the max distance in a variable*/
+				int nearest_index = 0;
+				for (int k = 1; k < num_colors; k++){
+					delta_red = clusters[i].center.red - clusters[k].center.red;
+					delta_green = clusters[i].center.green - clusters[k].center.green;
+					delta_blue = clusters[i].center.blue - clusters[k].center.blue;
+
+					dist = delta_red * delta_red + delta_green * delta_green + delta_blue * delta_blue;
+
+					if (dist < min_dist){
+						min_dist = dist;
+						nearest_index = k;
+					}
+				}
+
+				d[i] = nearest_index;
+				
+			}
+
+			/*Sort the distance array in ascending order*/
+			array_size = sizeof(d)/sizeof(d[0]);
+			
+			/*Initialze the indices array (p)*/
+			for (int index = 0; index < array_size; ++index){
+				p[index] = index;
+			}
+
+			/*P array is all zeros...*/
+			/*Use the built in sort function*/
+			sort(p, p + array_size);
+
+		 	cout << "p[20]" << p[20] << endl;
+		}
+
+
+
+	}
+
 /*Janceys Kmeans algorithm - Similar to batch kmeans, with a different center update step*/
 void 
 janceys_kmeans(const RGB_Image* img, const int num_colors,
@@ -600,7 +679,7 @@ main(int argc, char* argv[])
 	cluster = maximin(img, k);
 
 	/* Implement Batch K-means*/
-	janceys_kmeans(img, k, INT_MAX, cluster);
+	tie_algorithm(img, k, INT_MAX, cluster);
 
 	/* Stop Timer*/
 	std::chrono::high_resolution_clock::time_point stop = std::chrono::high_resolution_clock::now();
