@@ -394,7 +394,7 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 		int* l = new int[num_pixels]; /*Array to store the index of the pixel's nearest center*/
 		double* d = new double[num_colors]; /*Array to store the shortest distance between each center*/
 		int* p = new int[num_colors]; /*Array to store the indices of d in ascending order*/
-		int array_size;
+		int* assign = new int[num_pixels];
 
 		double sse; /*Variable to store SSE*/
 		double delta_red, delta_green, delta_blue;
@@ -405,8 +405,8 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 		temp_clusters = ( RGB_Cluster * ) malloc ( num_colors * sizeof ( RGB_Cluster ) );
 
 		/*Set each element in the index array to 1*/
-		for(int j = 0; j < num_pixels; j++){
-			l[j] = 1;
+		for(int i = 0; i < num_pixels; i++){
+			l[i] = 1;
 		}
 
 		for (int iter = 0; iter < max_iters; iter++){
@@ -414,52 +414,74 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 			sse = 0.0; /*Reset sse for next iteration*/
 
 			/*Reset the clusters for the next iteration*/
-			for (int i = 0; i < num_colors; i++){
-				temp_clusters[i].center.red = 0.0;
-				temp_clusters[i].center.green = 0.0;
-				temp_clusters[i].center.blue = 0.0;
-				temp_clusters[i].size = 0;
-				clusters[i].size = 0; 
+			for (int j = 0; j < num_colors; j++){
+				temp_clusters[j].center.red = 0.0;
+				temp_clusters[j].center.green = 0.0;
+				temp_clusters[j].center.blue = 0.0;
+				temp_clusters[j].size = 0;
+				clusters[j].size = 0; 
 			}
 
 			/*Computer pairwise distances between each center*/
-			for (int i = 0; i < num_colors; i++){
+			for (int j = 0; j < num_colors; j++){
 				double min_dist = MAX_RGB_DIST; /*store the max distance in a variable*/
 
-				for (int k = i+1; k < num_colors; k++){
-					delta_red = clusters[i].center.red - clusters[k].center.red;
-					delta_green = clusters[i].center.green - clusters[k].center.green;
-					delta_blue = clusters[i].center.blue - clusters[k].center.blue;
+				for (int k = j+1; k < num_colors; k++){
+					delta_red = clusters[j].center.red - clusters[k].center.red;
+					delta_green = clusters[j].center.green - clusters[k].center.green;
+					delta_blue = clusters[j].center.blue - clusters[k].center.blue;
 
-					
 					dist = delta_red * delta_red + delta_green * delta_green + delta_blue * delta_blue;
-
-					
 
 					if (dist < min_dist){
 						min_dist = dist;
 					}
 				}
 				
-				d[i] = min_dist;
+				d[j] = min_dist;
 				
 			}
 
 			/*Sort the distance array in ascending order*/
 			
-			/*Initialize p array*/
-			for(int i = 0; i < num_colors; i++){
-				p[i] = i;
+			// /*Initialize p array*/
+			for(int j = 0; j < num_colors; j++){
+				p[j] = j;
 			}
 			/*Use the built in sort function and lamda function to get an array of indices in ascending order*/
 			std::sort(p, p + num_colors, [&d](int a, int b){
 				return d[a] < d[b];
 			});
 
-			for(int i = 0; i < num_colors; i++){
-				cout << p[i] << " ";
+			/*Loop over all pixels and assign them to the nearest cluster*/
+		for(int i = 0; i < num_pixels; i++){
+			double min_dist = MAX_RGB_DIST; /*store the max distance in a variable*/
+			int cluster_index = 0;
+			pixel = img->data[i];
+			
+			/*Calculate the Euclidean distance between the current pixel and current cluster*/
+			for (int j = 0; j < num_colors; j++){
+				delta_red = pixel.red - clusters[j].center.red;
+				delta_green = pixel.green - clusters[j].center.green;
+				delta_blue = pixel.blue - clusters[j].center.blue;
+				dist = delta_red * delta_red + delta_green * delta_green + delta_blue * delta_blue;
+
+				/*Checking if this is the closest center*/
+				if (dist < min_dist){
+					min_dist = dist; /*Resetting min_dist*/
+					cluster_index = j; /*Assigning the closest pixel to a center*/
+				}
 			}
-	
+			assign[i] = cluster_index; /*Store the assignment of the pixel to cluster in the array*/
+			clusters[cluster_index].size++; /*Increase cluster size to make room for new pixel*/
+			sse += min_dist; /*Accumulate the sse based on the euclidean distance of all pixels*/
+
+			/* Update the temporary center & size of the nearest cluster */
+			temp_clusters[cluster_index].center.red += pixel.red;
+			temp_clusters[cluster_index].center.green += pixel.green;
+			temp_clusters[cluster_index].center.blue += pixel.blue;
+		}
+
 			
 
 		}
