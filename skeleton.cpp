@@ -425,37 +425,43 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 			/*Computer pairwise distances between each center*/
 			for (int i = 0; i < num_colors; i++){
 				double min_dist = MAX_RGB_DIST; /*store the max distance in a variable*/
-				int nearest_index = 0;
-				for (int k = 1; k < num_colors; k++){
+
+				for (int k = i+1; k < num_colors; k++){
 					delta_red = clusters[i].center.red - clusters[k].center.red;
 					delta_green = clusters[i].center.green - clusters[k].center.green;
 					delta_blue = clusters[i].center.blue - clusters[k].center.blue;
 
+					
 					dist = delta_red * delta_red + delta_green * delta_green + delta_blue * delta_blue;
+
+					
 
 					if (dist < min_dist){
 						min_dist = dist;
-						nearest_index = k;
 					}
 				}
-
-				d[i] = nearest_index;
+				
+				d[i] = min_dist;
 				
 			}
 
 			/*Sort the distance array in ascending order*/
-			array_size = sizeof(d)/sizeof(d[0]);
 			
-			/*Initialze the indices array (p)*/
-			for (int index = 0; index < array_size; ++index){
-				p[index] = index;
+			/*Initialize p array*/
+			for(int i = 0; i < num_colors; i++){
+				p[i] = i;
 			}
+			/*Use the built in sort function and lamda function to get an array of indices in ascending order*/
+			std::sort(p, p + num_colors, [&d](int a, int b){
+				return d[a] < d[b];
+			});
 
-			/*P array is all zeros...*/
-			/*Use the built in sort function*/
-			sort(p, p + array_size);
+			for(int i = 0; i < num_colors; i++){
+				cout << p[i] << " ";
+			}
+	
+			
 
-		 	cout << "p[20]" << p[20] << endl;
 		}
 
 
