@@ -391,11 +391,16 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 	{
 		int num_pixels = img->size; /*Get the number of pixels in the image*/
 
-		int* l = new int[num_pixels]; /*Array to store the index of the pixel's nearest center*/
-		double* d = new double[num_colors]; /*Array to store the shortest distance between each center*/
-		int* p = new int[num_colors]; /*Array to store the indices of d in ascending order*/
-		int* assign = new int[num_pixels];
+		/*2d array to store distances between centers*/
+		double** center_to_center_dist = new double*[num_colors];
+		for(int i = 0; i < num_colors; i++){ /*Allocate memory for each row*/
+			center_to_center_dist[i] = new double[num_colors];
+		}
 
+		int* assign = new int[num_pixels];
+		int* pixel_nearest_center = new int[num_pixels];
+
+		int current_nearest_center; 
 		double sse; /*Variable to store SSE*/
 		double delta_red, delta_green, delta_blue;
 		double dist;
@@ -404,17 +409,21 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 
 		temp_clusters = ( RGB_Cluster * ) malloc ( num_colors * sizeof ( RGB_Cluster ) );
 
-		/*Set each element in the index array to 1*/
-		for(int i = 0; i < num_pixels; i++){
-			l[i] = 1;
+		/*Initialize pixel center array*/
+		for(int i = 0; i < num_pixels; i++)
+		{
+			pixel_nearest_center[i] = 1;
 		}
 
-		for (int iter = 0; iter < max_iters; iter++){
+
+		for (int iter = 0; iter < max_iters; iter++)
+		{
 
 			sse = 0.0; /*Reset sse for next iteration*/
 
 			/*Reset the clusters for the next iteration*/
-			for (int j = 0; j < num_colors; j++){
+			for (int j = 0; j < num_colors; j++)
+			{
 				temp_clusters[j].center.red = 0.0;
 				temp_clusters[j].center.green = 0.0;
 				temp_clusters[j].center.blue = 0.0;
@@ -423,71 +432,55 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 			}
 
 			/*Computer pairwise distances between each center*/
-			for (int j = 0; j < num_colors; j++){
+			for (int i = 0; i < num_colors; i++)
+			{
 				double min_dist = MAX_RGB_DIST; /*store the max distance in a variable*/
 
-				for (int k = j+1; k < num_colors; k++){
-					delta_red = clusters[j].center.red - clusters[k].center.red;
-					delta_green = clusters[j].center.green - clusters[k].center.green;
-					delta_blue = clusters[j].center.blue - clusters[k].center.blue;
+				for (int j = 0; j < num_colors; j++)
+				{
+					delta_red = 0.25 * (clusters[i].center.red - clusters[j].center.red);
+					delta_green = 0.25 * (clusters[i].center.green - clusters[j].center.green);
+					delta_blue = 0.25 * (clusters[i].center.blue - clusters[j].center.blue);
 
 					dist = delta_red * delta_red + delta_green * delta_green + delta_blue * delta_blue;
 
+					center_to_center_dist[i][j] = dist;
+				}
+				
+				
+			}
+
+			/*Sort each row  separately in ascending order*/
+			for(int i = 0; i < num_colors; i++){
+				sort(center_to_center_dist[i], center_to_center_dist[i] + num_colors);
+			}
+
+			for(int i = 0; i < num_pixels; i++)
+			{
+				current_nearest_center = pixel_nearest_center[i]; /*Index of current nearest center*/
+
+				double min_dist = MAX_RGB_DIST; /*store the max distance in a variable*/
+				int cluster_index = 0;
+				pixel = img->data[i];
+
+				/*Calculate the Euclidean distance between the current pixel and current cluster*/
+				for (int j = 0; j < num_colors; j++)
+				{
+					delta_red = pixel.red - clusters[j].center.red;
+					delta_green = pixel.green - clusters[j].center.green;
+					delta_blue = pixel.blue - clusters[j].center.blue;
+
+					dist = delta_red * delta_red + delta_green * delta_green + delta_blue * delta_blue;
+
+					/*Checking if this is the closest center*/
 					if (dist < min_dist){
-						min_dist = dist;
+						min_dist = dist; /*Resetting min_dist*/
 					}
 				}
 				
-				d[j] = min_dist;
-				
+				return;
 			}
-
-			/*Sort the distance array in ascending order*/
-			
-			// /*Initialize p array*/
-			for(int j = 0; j < num_colors; j++){
-				p[j] = j;
-			}
-			/*Use the built in sort function and lamda function to get an array of indices in ascending order*/
-			std::sort(p, p + num_colors, [&d](int a, int b){
-				return d[a] < d[b];
-			});
-
-			/*Loop over all pixels and assign them to the nearest cluster*/
-		for(int i = 0; i < num_pixels; i++){
-			double min_dist = MAX_RGB_DIST; /*store the max distance in a variable*/
-			int cluster_index = 0;
-			pixel = img->data[i];
-			
-			/*Calculate the Euclidean distance between the current pixel and current cluster*/
-			for (int j = 0; j < num_colors; j++){
-				delta_red = pixel.red - clusters[j].center.red;
-				delta_green = pixel.green - clusters[j].center.green;
-				delta_blue = pixel.blue - clusters[j].center.blue;
-				dist = delta_red * delta_red + delta_green * delta_green + delta_blue * delta_blue;
-
-				/*Checking if this is the closest center*/
-				if (dist < min_dist){
-					min_dist = dist; /*Resetting min_dist*/
-					cluster_index = j; /*Assigning the closest pixel to a center*/
-				}
-			}
-			assign[i] = cluster_index; /*Store the assignment of the pixel to cluster in the array*/
-			clusters[cluster_index].size++; /*Increase cluster size to make room for new pixel*/
-			sse += min_dist; /*Accumulate the sse based on the euclidean distance of all pixels*/
-
-			/* Update the temporary center & size of the nearest cluster */
-			temp_clusters[cluster_index].center.red += pixel.red;
-			temp_clusters[cluster_index].center.green += pixel.green;
-			temp_clusters[cluster_index].center.blue += pixel.blue;
 		}
-
-			
-
-		}
-
-
-
 	}
 
 /*Janceys Kmeans algorithm - Similar to batch kmeans, with a different center update step*/
