@@ -446,9 +446,9 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 			/*Computer pairwise distances between each center*/
 			for (int i = 0; i < num_colors; i++)
 			{
-				double min_dist = MAX_RGB_DIST; /*store the max distance in a variable*/
+				center_to_center_dist_original[i][i] = 0;
 
-				for (int j = 0; j < num_colors; j++)
+				for (int j = i+1; j < num_colors; j++)
 				{
 					delta_red = clusters[i].center.red - clusters[j].center.red;
 					delta_green = clusters[i].center.green - clusters[j].center.green;
@@ -498,7 +498,7 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 					delta_green_temp = pixel.green - clusters[temp_nearest_index].center.green;
 					delta_blue_temp = pixel.blue - clusters[temp_nearest_index].center.blue;
 
-					nearest_center_distance_temp = delta_red * delta_red + delta_green * delta_green + delta_blue * delta_blue;
+					nearest_center_distance_temp = delta_red_temp * delta_red_temp + delta_green_temp * delta_green_temp + delta_blue_temp * delta_blue_temp;
 					
 					/*The temp nearest center is closer to the pixel than its current nearest center*/
 					if(nearest_center_distance_temp < nearest_center_distance || 
