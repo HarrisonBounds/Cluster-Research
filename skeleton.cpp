@@ -398,13 +398,6 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 			center_to_center_dist_original[i] = new double[num_colors];
 		}
 
-		// /*Sorted distance array between centers in ascending order*/
-		// double** center_to_center_dist_sorted = new double*[num_colors]; /*Array of indexes*/
-		// for(int i = 0; i < num_colors; i++)/*Allocate memory for each row*/
-		// { 
-		// 	center_to_center_dist_sorted[i] = new double[num_colors];
-		// }
-
 		// Create an index array to store indices
 		int** center_to_center_dist_sorted = new int*[num_colors];
 		for (int i = 0; i < num_colors; ++i) {
@@ -457,26 +450,16 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 
 				for (int j = 0; j < num_colors; j++)
 				{
-					delta_red = 0.25 * (clusters[i].center.red - clusters[j].center.red);
-					delta_green = 0.25 * (clusters[i].center.green - clusters[j].center.green);
-					delta_blue = 0.25 * (clusters[i].center.blue - clusters[j].center.blue);
+					delta_red = clusters[i].center.red - clusters[j].center.red;
+					delta_green = clusters[i].center.green - clusters[j].center.green;
+					delta_blue = clusters[i].center.blue - clusters[j].center.blue;
 
-					dist = delta_red * delta_red + delta_green * delta_green + delta_blue * delta_blue;
-
-					center_to_center_dist_original[i][j] = dist;
+					center_to_center_dist_original[i][j] = 0.25 * (delta_red * delta_red + delta_green * delta_green + delta_blue * delta_blue);
 				}
 				
 				
 			}
 
-			// /*Copy array to have original data*/
-			// for(int i = 0; i < num_colors; i++)
-			// {
-			// 	for(int j = 0; j < num_colors; j++)
-			// 	{
-			// 		center_to_center_dist_original[i][j] = center_to_center_dist_sorted[i][j];
-			// 	}
-			// }
 
 			/*Sort each row  separately in ascending order*/
 			for(int i = 0; i < num_colors; i++)
@@ -487,13 +470,6 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 				});
 			}
 
-			// cout << "Sorted Array" << endl;
-			// cout << "===============" << endl;
-			// for(int i = 0; i < num_colors; i++){
-			// 	for(int j = 0; j < num_colors; j++){
-			// 		cout << "center " << i << " " << j << ": " << center_to_center_dist_sorted[i][j] << endl;
-			// 	}
-			// }
 
 			/*Assign each pixel to its nearest center*/
 			for(int i = 0; i < num_pixels; i++)
