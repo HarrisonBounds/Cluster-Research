@@ -424,7 +424,7 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 		/*Initialize pixel center array*/
 		for(int i = 0; i < num_pixels; i++)
 		{
-			pixel_nearest_center[i] = 1;
+			pixel_nearest_center[i] = 0;
 		}
 
 
@@ -508,7 +508,7 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 						/*Update nearest center information*/
 						nearest_center_distance = nearest_center_distance_temp; /*Curren nearest center distance*/
 						nearest_center_index = temp_nearest_index; /*Current nearest center index*/
-						j = 1; /*Reset search*/
+						j = 0; /*Reset search*/
 					}
 						
 
