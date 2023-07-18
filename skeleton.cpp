@@ -446,9 +446,8 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 			/*Computer pairwise distances between each center*/
 			for (int i = 0; i < num_colors; i++)
 			{
-				center_to_center_dist_original[i][i] = 0;
 
-				for (int j = i+1; j < num_colors; j++)
+				for (int j = 0; j < num_colors; j++)
 				{
 					delta_red = clusters[i].center.red - clusters[j].center.red;
 					delta_green = clusters[i].center.green - clusters[j].center.green;
@@ -460,7 +459,7 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 				
 			}
 
-
+			
 			/*Sort each row  separately in ascending order*/
 			for(int i = 0; i < num_colors; i++)
 			{
@@ -469,6 +468,20 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 					return center_to_center_dist_original[i][a] < center_to_center_dist_original[i][b];
 				});
 			}
+			// for(int i = 0; i < num_colors; i++){
+			// 		for(int j = 0; j < num_colors; j++){
+			// 			cout << "center " << i << " " << j << ": " << center_to_center_dist_original[i][j] << endl;
+			// 		}
+			// 	}
+			
+			// cout << "================================" << endl;
+			// for(int i = 0; i < num_colors; i++){
+			// 	for(int j = 0; j < num_colors; j++){
+			// 		cout << "center " << i << " " << j << ": " << center_to_center_dist_sorted[i][j] << endl;
+			// 	}
+			// }
+
+			// return;
 
 
 			/*Assign each pixel to its nearest center*/
@@ -484,7 +497,7 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 				nearest_center_distance = delta_red * delta_red + delta_green * delta_green + delta_blue * delta_blue;
 
 				/*Update the pixels nearest center if necessary*/
-				for (int j = 0+1; j < num_colors; j++)
+				for (int j = 0; j < num_colors; j++)
 				{
 					if (nearest_center_distance < center_to_center_dist_original[nearest_center_index][j])
 					{
@@ -510,8 +523,7 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 						nearest_center_index = temp_nearest_index; /*Current nearest center index*/
 						j = 0; /*Reset search*/
 					}
-						
-
+	
 				}
 				
 				pixel_nearest_center[i] = nearest_center_index; /*Assign pixel to its new nearest center*/
