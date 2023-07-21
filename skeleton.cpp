@@ -480,7 +480,7 @@ jancey(const RGB_Image* img, const int numColors, RGB_Cluster* clusters, int& nu
 
 			sse += minDist;
 		}
-
+		/*Update centers via batch k-means algorithm*/
 		if (isBatch)
 		{
 			for (int j = 0; j < numColors; j++)
@@ -495,6 +495,7 @@ jancey(const RGB_Image* img, const int numColors, RGB_Cluster* clusters, int& nu
 				}
 			}
 		}
+		/*Update centers via jancey algorithm*/
 		else
 		{
 			for (int j = 0; j < numColors; j++)
@@ -564,8 +565,8 @@ TIE_jancey(const RGB_Image* img, const int numColors, RGB_Cluster* clusters, int
 
 	int* member = (int*)calloc(img->size, sizeof(int));
 
-	int** p = new int* [numColors];
-	double** ccDist = new double* [numColors];
+	int** p = new int* [numColors]; /*center to center distance array sorted in ascending order by index*/
+	double** ccDist = new double* [numColors]; /*2d array to store center to center distances*/
 	for (int i = 0; i < numColors; i++)
 	{
 		p[i] = new int[numColors];
@@ -1117,7 +1118,8 @@ int
 main(int argc, char* argv[])
 {
 	char* filename;						/* Filename Pointer*/
-	int k;								/* Number of clusters*/
+	int k;
+	int numIters;								/* Number of clusters*/
 	RGB_Image* img;
 	RGB_Image* out_img;
 	RGB_Cluster* cluster;
@@ -1142,7 +1144,7 @@ main(int argc, char* argv[])
 	srand(time(NULL));
 
 	/* Print Args*/
-	printf("%s %d\n", filename, k );
+	printf("%s %d\n", filename, k);
 
 	/* Read Image*/
 	img = read_PPM(filename);
@@ -1152,14 +1154,11 @@ main(int argc, char* argv[])
 	/*Declare data types of start, stop, and elapsed*/
 	std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
 
-	/* Initialize centers */
-    //cluster = gen_rand_centers(img, k);
-
 	/*Initialize centers using maximin*/
 	cluster = maximin(img, k);
 
-	/* Implement Batch K-means*/
-	tie_algorithm(img, k, INT_MAX, cluster);
+	/* Run Cluster function*/
+	TIE_jancey(img, k, cluster, numIters, 1.7, false);
 
 	/* Stop Timer*/
 	std::chrono::high_resolution_clock::time_point stop = std::chrono::high_resolution_clock::now();
