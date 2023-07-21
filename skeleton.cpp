@@ -10,6 +10,7 @@
 #include <time.h>
 #include <float.h>
 #include <array>
+#include <vector>
 
 using namespace std;
 
@@ -43,6 +44,7 @@ typedef struct
 #define LOWER_MASK 0x7fffffffUL /* least significant r bits */
 #define MAX_RGB_DIST 195075
 #define NUM_RUNS 100
+#define NEAR_ZERO 1e-6
 
 static ulong mt[N]; /* the array for the state vector  */
 static int mti = N + 1; /* mti == N + 1 means mt[N] is not initialized */
@@ -304,6 +306,407 @@ gen_rand_centers(const RGB_Image* img, const int k) {
 	return(cluster);
 }
 
+/* Reset a given set of clusters */
+
+RGB_Cluster*
+reset_centers(RGB_Cluster* clusters, const int numColors)
+{
+	for (int i = 0; i < numColors; i++)
+	{
+		clusters[i].center.red = 0.0;
+		clusters[i].center.green = 0.0;
+		clusters[i].center.blue = 0.0;
+		/*
+		clusters[i].center.weight = 0.0;
+		*/
+		clusters[i].size = 0.0;
+	}
+
+	return clusters;
+}
+
+/* Duplicate a given set of clusters */
+
+RGB_Cluster*
+duplicate_centers(const RGB_Cluster* orig, const int numColors)
+{
+	RGB_Cluster* copy = (RGB_Cluster*)malloc(numColors * sizeof(RGB_Cluster));
+
+	for (int i = 0; i < numColors; i++)
+	{
+		copy[i].center.red = orig[i].center.red;
+		copy[i].center.green = orig[i].center.green;
+		copy[i].center.blue = orig[i].center.blue;
+		/*
+		copy[i].center.weight = orig[i].center.weight;
+		*/
+		copy[i].size = orig[i].size;
+	}
+
+	return copy;
+}
+
+double
+calc_MSE(const RGB_Image* img, const RGB_Cluster* clusters, const int numColors)
+{
+	double deltaR, deltaG, deltaB, dist, minDist, sse = 0.0;
+	RGB_Pixel pixel;
+
+	for (int i = 0; i < img->size; i++)
+	{
+		pixel = img->data[i];
+		minDist = MAX_RGB_DIST;
+
+		for (int j = 0; j < numColors; j++)
+		{
+			deltaR = clusters[j].center.red - pixel.red;
+			deltaG = clusters[j].center.green - pixel.green;
+			deltaB = clusters[j].center.blue - pixel.blue;
+
+			dist = deltaR * deltaR + deltaG * deltaG + deltaB * deltaB;
+
+			if (dist < minDist)
+			{
+				minDist = dist;
+			}
+		}
+
+		sse += minDist;
+	}
+
+	return sse / img->size;
+}
+
+void
+free_image(const RGB_Image* img)
+{
+	free(img->data);
+	delete (img);
+}
+
+RGB_Image*
+map_pixels(const RGB_Image* inImg, const RGB_Cluster* cluster, const int numColors)
+{
+	double deltaR, deltaG, deltaB, dist, minDist;
+	int minIndex;
+	RGB_Image* outImg;
+	RGB_Pixel pixel;
+
+	outImg = new RGB_Image;
+	outImg->data = new RGB_Pixel[inImg->size];
+	outImg->height = inImg->height;
+	outImg->width = inImg->width;
+	outImg->size = outImg->height * outImg->width;
+
+	for (int i = 0; i < inImg->size; i++)
+	{
+		pixel = inImg->data[i];
+		minDist = MAX_RGB_DIST;
+
+		for (int j = 0; j < numColors; j++)
+		{
+			deltaR = cluster[j].center.red - pixel.red;
+			deltaG = cluster[j].center.green - pixel.green;
+			deltaB = cluster[j].center.blue - pixel.blue;
+
+			dist = deltaR * deltaR + deltaG * deltaG + deltaB * deltaB;
+			if (dist < minDist)
+			{
+				minDist = dist;
+				minIndex = j;
+			}
+		}
+
+		outImg->data[i].red = cluster[minIndex].center.red;
+		outImg->data[i].green = cluster[minIndex].center.green;
+		outImg->data[i].blue = cluster[minIndex].center.blue;
+	}
+
+	return outImg;
+}
+
+/* Jancey Algorithm */
+void
+jancey(const RGB_Image* img, const int numColors, RGB_Cluster* clusters, int& numIters, const double alpha, const bool isBatch)
+{
+	numIters = 0; /* initialize output variable */
+	int numChanges, minIndex, size;
+	double deltaR, deltaG, deltaB, dist, minDist;
+	double sse;
+
+	int* member = new int[img->size];
+
+	RGB_Pixel pixel;
+	RGB_Cluster* temp = new RGB_Cluster[numColors];
+
+	do
+	{
+		numChanges = 0;
+		sse = 0.0;
+
+		reset_centers(temp, numColors);
+
+		for (int i = 0; i < img->size; i++)
+		{
+			pixel = img->data[i];
+
+			minDist = MAX_RGB_DIST;
+			minIndex = 0;
+
+			for (int j = 0; j < numColors; j++)
+			{
+				deltaR = clusters[j].center.red - pixel.red;
+				deltaG = clusters[j].center.green - pixel.green;
+				deltaB = clusters[j].center.blue - pixel.blue;
+
+				dist = deltaR * deltaR + deltaG * deltaG + deltaB * deltaB;
+				if (dist < minDist)
+				{
+					minDist = dist;
+					minIndex = j;
+				}
+			}
+
+			temp[minIndex].center.red += pixel.red;
+			temp[minIndex].center.green += pixel.green;
+			temp[minIndex].center.blue += pixel.blue;
+			temp[minIndex].size += 1;
+
+			if (minIndex != member[i])
+			{
+				numChanges += 1;
+				member[i] = minIndex;
+			}
+
+			sse += minDist;
+		}
+
+		if (isBatch)
+		{
+			for (int j = 0; j < numColors; j++)
+			{
+				size = temp[j].size;
+
+				if (size != 0)
+				{
+					clusters[j].center.red = temp[j].center.red / size;
+					clusters[j].center.green = temp[j].center.green / size;
+					clusters[j].center.blue = temp[j].center.blue / size;
+				}
+			}
+		}
+		else
+		{
+			for (int j = 0; j < numColors; j++)
+			{
+				size = temp[j].size;
+
+				if (size != 0)
+				{
+					clusters[j].center.red += alpha * (temp[j].center.red / size - clusters[j].center.red);
+					clusters[j].center.green += alpha * (temp[j].center.green / size - clusters[j].center.green);
+					clusters[j].center.blue += alpha * (temp[j].center.blue / size - clusters[j].center.blue);
+				}
+			}
+		}
+
+		numIters += 1;
+
+		cout << "Iteration " << numIters << ": SSE = " << sse << " [" << "# changes = " << numChanges << "]" << endl;
+
+	} while (numChanges != 0);
+
+	delete[] member;
+	delete[] temp;
+}
+
+/* Sorts an array in ascending order */
+vector<pair<double, int>>
+sort_array(double arr[], const int n)
+{
+	/* Vector to store element with respective present index */
+	vector<pair<double, int>> vp;
+
+	/* Insert element in pair vector to keep track of previous indexes */
+	for (int i = 0; i < n; ++i)
+	{
+		vp.push_back(make_pair(arr[i], i));
+	}
+
+	/* Sort pair vector */
+	sort(vp.begin(), vp.end());
+
+	/* Display sorted element with previous indexes corresponding to each element */
+	/*
+	cout << "\nElement\t"
+		<< "index" << endl;
+	for (int i = 0; i < vp.size(); i++) {
+		cout << vp[i].first << "\t"
+			<< vp[i].second << endl;
+	}
+	*/
+
+	return vp;
+}
+
+/* Jancey accelerated using TIE (Triangle Equality Elimination) */
+void
+TIE_jancey(const RGB_Image* img, const int numColors, RGB_Cluster* clusters, int& numIters, const double alpha, const bool isBatch)
+{
+	numIters = 0;
+	int numChanges, minIndex, size, tempIndex, oldMem;
+	double deltaR, deltaG, deltaB, dist, minDist, delta;
+	double sse;
+
+	RGB_Cluster clustI, clustJ;
+	RGB_Pixel pixel;
+	RGB_Cluster* temp = new RGB_Cluster[numColors];
+
+	int* member = (int*)calloc(img->size, sizeof(int));
+
+	int** p = new int* [numColors];
+	double** ccDist = new double* [numColors];
+	for (int i = 0; i < numColors; i++)
+	{
+		p[i] = new int[numColors];
+		ccDist[i] = new double[numColors];
+	}
+
+	vector<pair<double, int>> vector;
+
+	do
+	{
+		numChanges = 0;
+		sse = 0.0;
+
+		reset_centers(temp, numColors);
+
+		for (int i = 0; i < numColors; i++)
+		{
+			ccDist[i][i] = 0.0;
+			clustI = clusters[i];
+
+			for (int j = i + 1; j < numColors; j++)
+			{
+				clustJ = clusters[j];
+
+				deltaR = clustI.center.red - clustJ.center.red;
+				deltaG = clustI.center.green - clustJ.center.green;
+				deltaB = clustI.center.blue - clustJ.center.blue;
+
+				ccDist[i][j] = ccDist[j][i] = 0.25 * (deltaR * deltaR + deltaG * deltaG + deltaB * deltaB);
+			}
+
+			vector = sort_array(ccDist[i], numColors);
+
+			for (int j = 0; j < numColors; j++)
+			{
+				ccDist[i][j] = vector[j].first;
+				p[i][j] = vector[j].second;
+			}
+		}
+
+		for (int i = 0; i < img->size; i++)
+		{
+			pixel = img->data[i];
+			minIndex = oldMem = member[i];
+
+			/* calculate the distance from the pixel to its old center */
+			deltaR = clusters[minIndex].center.red - pixel.red;
+			deltaG = clusters[minIndex].center.green - pixel.green;
+			deltaB = clusters[minIndex].center.blue - pixel.blue;
+			minDist = deltaR * deltaR + deltaG * deltaG + deltaB * deltaB;
+
+			for (int j = 1; j < numColors; j++)
+			{
+				if (minDist < ccDist[minIndex][j])
+				{
+					break;
+				}
+
+				tempIndex = p[minIndex][j];
+
+				deltaR = clusters[tempIndex].center.red - pixel.red;
+				deltaG = clusters[tempIndex].center.green - pixel.green;
+				deltaB = clusters[tempIndex].center.blue - pixel.blue;
+
+				dist = deltaR * deltaR + deltaG * deltaG + deltaB * deltaB;
+				delta = dist - minDist;
+
+				if (delta < 0.0)
+				{
+					minDist = dist;
+					minIndex = tempIndex;
+					j = 0;	/* reset the search */
+				}
+				else if ((tempIndex < minIndex) && (fabs(delta) < NEAR_ZERO))
+				{
+					minIndex = tempIndex;
+					j = 0;	/* reset the search */
+				}
+
+			}
+
+			temp[minIndex].center.red += pixel.red;
+			temp[minIndex].center.green += pixel.green;
+			temp[minIndex].center.blue += pixel.blue;
+			temp[minIndex].size += 1;
+
+			if (minIndex != oldMem)
+			{
+				numChanges += 1;
+				member[i] = minIndex;
+			}
+
+			sse += minDist;
+		}
+
+		if (isBatch)
+		{
+			for (int j = 0; j < numColors; j++)
+			{
+				size = temp[j].size;
+
+				if (size != 0)
+				{
+					clusters[j].center.red = temp[j].center.red / size;
+					clusters[j].center.green = temp[j].center.green / size;
+					clusters[j].center.blue = temp[j].center.blue / size;
+				}
+			}
+		}
+		else
+		{
+			for (int j = 0; j < numColors; j++)
+			{
+				size = temp[j].size;
+
+				if (size != 0)
+				{
+					clusters[j].center.red += alpha * (temp[j].center.red / size - clusters[j].center.red);
+					clusters[j].center.green += alpha * (temp[j].center.green / size - clusters[j].center.green);
+					clusters[j].center.blue += alpha * (temp[j].center.blue / size - clusters[j].center.blue);
+				}
+			}
+		}
+
+		numIters += 1;
+
+		cout << "Iteration " << numIters << ": SSE = " << sse << " [" << "# changes = " << numChanges << "]" << endl;
+
+	} while (numChanges != 0);
+
+	delete[] member;
+	delete[] temp;
+	for (int i = 0; i < numColors; i++)
+	{
+		delete[] p[i];
+		delete[] ccDist[i];
+	}
+	delete[] p;
+	delete[] ccDist;
+}
+
 /*
    For application of the batchk k-means algorithm to color quantization, see
    M. E. Celebi, Improving the Performance of K-Means for Color Quantization,
@@ -407,7 +810,6 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 			}
 		}
 
-		int* assign = new int[num_pixels];
 		int* pixel_nearest_center = new int[num_pixels];
 
 		int nearest_center_index; 
@@ -415,7 +817,6 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 		double sse; /*Variable to store SSE*/
 		double delta_red, delta_green, delta_blue, delta_red_temp, delta_green_temp, delta_blue_temp;
 		double nearest_center_distance, nearest_center_distance_temp;
-		double dist;
 		RGB_Pixel pixel;
 		RGB_Cluster *temp_clusters;
 
@@ -468,20 +869,6 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 					return center_to_center_dist_original[i][a] < center_to_center_dist_original[i][b];
 				});
 			}
-			// for(int i = 0; i < num_colors; i++){
-			// 		for(int j = 0; j < num_colors; j++){
-			// 			cout << "center " << i << " " << j << ": " << center_to_center_dist_original[i][j] << endl;
-			// 		}
-			// 	}
-			
-			// cout << "================================" << endl;
-			// for(int i = 0; i < num_colors; i++){
-			// 	for(int j = 0; j < num_colors; j++){
-			// 		cout << "center " << i << " " << j << ": " << center_to_center_dist_sorted[i][j] << endl;
-			// 	}
-			// }
-
-			// return;
 
 
 			/*Assign each pixel to its nearest center*/
@@ -497,7 +884,7 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 				nearest_center_distance = delta_red * delta_red + delta_green * delta_green + delta_blue * delta_blue;
 
 				/*Update the pixels nearest center if necessary*/
-				for (int j = 0; j < num_colors; j++)
+				for (int j = 0+1; j < num_colors; j++)
 				{
 					if (nearest_center_distance < center_to_center_dist_original[nearest_center_index][j])
 					{
@@ -515,11 +902,10 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 					
 					/*The temp nearest center is closer to the pixel than its current nearest center*/
 					if(nearest_center_distance_temp < nearest_center_distance || 
-					((nearest_center_distance_temp == nearest_center_distance) && 
-					(temp_nearest_index < nearest_center_index)))
+					(nearest_center_distance_temp == nearest_center_distance) && (temp_nearest_index < nearest_center_index))
 					{	
 						/*Update nearest center information*/
-						nearest_center_distance = nearest_center_distance_temp; /*Curren nearest center distance*/
+						nearest_center_distance = nearest_center_distance_temp; /*Current nearest center distance*/
 						nearest_center_index = temp_nearest_index; /*Current nearest center index*/
 						j = 0; /*Reset search*/
 					}
@@ -529,6 +915,7 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 				pixel_nearest_center[i] = nearest_center_index; /*Assign pixel to its new nearest center*/
 				clusters[nearest_center_index].size++; /*Increase cluster size based on assigned index*/
 				sse += nearest_center_distance;
+
 
 				/* Update the temporary center & size of the nearest cluster */
 				temp_clusters[nearest_center_index].center.red += pixel.red;
