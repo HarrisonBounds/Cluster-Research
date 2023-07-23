@@ -15,10 +15,11 @@ using namespace std;
 
 typedef unsigned char uchar;
 typedef unsigned long ulong;
+typedef unsigned int uint;
 
 typedef struct
 {
-	double red, green, blue;
+	double red, green, blue, weight;
 } RGB_Pixel;
 
 typedef struct
@@ -31,8 +32,36 @@ typedef struct
 typedef struct
 {
 	int size;
+	RGB_Pixel* data;
+} RGB_Table;
+
+typedef struct
+{
+	int size;
 	RGB_Pixel center;
 } RGB_Cluster;
+
+typedef struct Bucket_Entry* Bucket;
+struct Bucket_Entry
+{
+	uint red;
+	uint green;
+	uint blue;
+	uint count;
+	Bucket next;
+};
+typedef Bucket* Hash_Table;
+
+// definitions for the color hash table
+#define HASH_SIZE 20023
+
+#define HASH(R, G, B) ( ( ( ( long ) ( R ) * 33023 + \
+                            ( long ) ( G ) * 30013 + \
+                            ( long ) ( B ) * 27011 ) \
+                          & 0x7fffffff ) % HASH_SIZE )
+
+// definitions for the color hash table
+#define HASH_SIZE 20023
 
 /* Mersenne Twister related constants */
 #define N 624
@@ -304,6 +333,112 @@ gen_rand_centers(const RGB_Image* img, const int k) {
 	return(cluster);
 }
 
+RGB_Table*
+calc_color_table(const RGB_Image* img)
+{
+	uint red, green, blue;
+	int ih, index;
+	double factor = 1. / img->size;
+	RGB_Pixel pixel;
+	Bucket bucket, tempBucket;
+
+	Hash_Table hashTable = (Hash_Table)malloc(HASH_SIZE * sizeof(Bucket));
+	RGB_Table* colorTable = (RGB_Table*)malloc(sizeof(RGB_Table));
+	colorTable->size = 0;
+
+	for (ih = 0; ih < HASH_SIZE; ih++)
+	{
+		hashTable[ih] = NULL;
+	}
+
+	/* Read in pixels using buffer */
+	for (int i = 0; i < img->size; i++)
+	{
+		pixel = img->data[i];
+
+		/* Add the pixels to the hash table */
+		red = pixel.red;
+		green = pixel.green;
+		blue = pixel.blue;
+
+		/* Determine the bucket */
+		ih = HASH(red, green, blue);
+
+		/* Search for the color in the bucket chain */
+		for (bucket = hashTable[ih]; bucket != NULL; bucket = bucket->next)
+		{
+			if (bucket->red == red && bucket->green == green && bucket->blue == blue)
+			{
+				/* This color exists in the hash table */
+				break;
+			}
+		}
+
+		if (bucket != NULL)
+		{
+			/* This color exists in the hash table */
+			bucket->count++;
+		}
+		else
+		{
+			colorTable->size++;
+
+			/* Create a new bucket entry for this color */
+			bucket = (Bucket)malloc(sizeof(struct Bucket_Entry));
+
+			bucket->red = red;
+			bucket->green = green;
+			bucket->blue = blue;
+			bucket->count = 1;
+			bucket->next = hashTable[ih];
+			hashTable[ih] = bucket;
+		}
+	}
+
+	colorTable->data = (RGB_Pixel*)malloc(colorTable->size * sizeof(RGB_Pixel));
+
+	index = 0;
+	for (ih = 0; ih < HASH_SIZE; ih++)
+	{
+		for (bucket = hashTable[ih]; bucket != NULL; )
+		{
+			colorTable->data[index].red = bucket->red;
+			colorTable->data[index].green = bucket->green;
+			colorTable->data[index].blue = bucket->blue;
+			colorTable->data[index].weight = bucket->count * factor;
+			index++;
+
+			/* Save the current bucket pointer */
+			tempBucket = bucket;
+
+			/* Advance to the next bucket */
+			bucket = bucket->next;
+
+			/* Free the current bucket */
+			free(tempBucket);
+		}
+	}
+
+	/* cout <<  "index = " << index << "; colorTable->size = " << colorTable->size << end; */
+
+	free(hashTable);
+
+	return colorTable;
+}
+
+void
+free_table(const RGB_Table* table)
+{
+	free(table->data);
+	delete (table);
+}
+
+/* Weighted Jancey algorithm */
+void
+weighted_jancey(const RGB_Table* colorTable, const int numColors, RGB_Cluster* clusters, int& numIters, const double alpha, const bool isBatch)
+{
+	
+}
 /*
    For application of the batchk k-means algorithm to color quantization, see
    M. E. Celebi, Improving the Performance of K-Means for Color Quantization,
