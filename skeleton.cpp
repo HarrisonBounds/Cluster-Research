@@ -891,7 +891,7 @@ weighted_jancey(const RGB_Table* colorTable, const int numColors, RGB_Cluster* c
 				member[i] = minIndex;
 			}
 
-			sse += minDist;
+			sse += (pixel.weight * minDist);
 		}
 
 		/*Update centers via batch k-means algorithm*/
