@@ -345,9 +345,7 @@ reset_centers(RGB_Cluster* clusters, const int numColors)
 		clusters[i].center.red = 0.0;
 		clusters[i].center.green = 0.0;
 		clusters[i].center.blue = 0.0;
-		/*
 		clusters[i].center.weight = 0.0;
-		*/
 		clusters[i].size = 0.0;
 	}
 
