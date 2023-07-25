@@ -841,7 +841,96 @@ free_table(const RGB_Table* table)
 void
 weighted_jancey(const RGB_Table* colorTable, const int numColors, RGB_Cluster* clusters, int& numIters, const double alpha, const bool isBatch)
 {
-	
+	numIters = 0; /* initialize output variable */
+	int numChanges, minIndex, size;
+	double deltaR, deltaG, deltaB, dist, minDist;
+	double sse;
+	int colorTableSize = colorTable->size;
+	double totalWeight;
+	int* member = new int[colorTable->size];
+
+	RGB_Pixel pixel;
+	RGB_Cluster* temp = new RGB_Cluster[numColors];
+
+	do
+	{
+		numChanges = 0;
+		sse = 0.0;
+
+		reset_centers(temp, numColors);
+
+		for (int i = 0; i < colorTableSize; i++)
+		{
+			pixel = colorTable->data[i];
+
+			minDist = MAX_RGB_DIST;
+			minIndex = 0;
+
+			for (int j = 0; j < numColors; j++)
+			{
+				deltaR = clusters[j].center.red - pixel.red;
+				deltaG = clusters[j].center.green - pixel.green;
+				deltaB = clusters[j].center.blue - pixel.blue;
+
+				dist = deltaR * deltaR + deltaG * deltaG + deltaB * deltaB;
+				if (dist < minDist)
+				{
+					minDist = dist;
+					minIndex = j;
+				}
+			}
+
+			temp[minIndex].center.red += (pixel.weight * pixel.red);
+			temp[minIndex].center.green += (pixel.weight * pixel.green);
+			temp[minIndex].center.blue += (pixel.weight * pixel.blue);
+			temp[minIndex].size += pixel.weight;
+
+			if (minIndex != member[i])
+			{
+				numChanges += 1;
+				member[i] = minIndex;
+			}
+
+			sse += minDist;
+		}
+
+		/*Update centers via batch k-means algorithm*/
+		if (isBatch)
+		{
+			for (int j = 0; j < numColors; j++)
+			{
+				totalWeight = temp[j].size;
+				if (totalWeight != 0)
+				{
+					clusters[j].center.red = temp[j].center.red / totalWeight;
+					clusters[j].center.green = temp[j].center.green / totalWeight;
+					clusters[j].center.blue = temp[j].center.blue / totalWeight;
+				}
+			}
+		}
+		/*Update centers via jancey algorithm*/
+		else
+		{
+			for (int j = 0; j < numColors; j++)
+			{
+				totalWeight = temp[j].size;
+				if (totalWeight != 0)
+				{
+					clusters[j].center.red += alpha * (temp[j].center.red / totalWeight - clusters[j].center.red);
+					clusters[j].center.green += alpha * (temp[j].center.green / totalWeight - clusters[j].center.green);
+					clusters[j].center.blue += alpha * (temp[j].center.blue / totalWeight - clusters[j].center.blue);
+				}
+			}
+		}
+
+		numIters += 1;
+
+		cout << "Iteration " << numIters << ": SSE = " << sse << " [" << "# changes = " << numChanges << "]" << endl;
+
+	} while (numChanges != 0);
+
+	delete[] member;
+	delete[] temp;
 }
 /*
    For application of the batchk k-means algorithm to color quantization, see
@@ -1258,6 +1347,7 @@ main(int argc, char* argv[])
 	RGB_Image* img;
 	RGB_Image* out_img;
 	RGB_Cluster* cluster;
+	RGB_Table* table; 
 	
 	if (argc == 3) {
 		/* Image filename */
@@ -1292,8 +1382,11 @@ main(int argc, char* argv[])
 	/*Initialize centers using maximin*/
 	cluster = maximin(img, k);
 
+	/*Turn color image into a Hash Table*/
+	table = calc_color_table(img);
+
 	/* Run Cluster function*/
-	TIE_jancey(img, k, cluster, numIters, 1.7, false);
+	weighted_jancey(table, k, cluster, numIters, 1.7, true);
 
 	/* Stop Timer*/
 	std::chrono::high_resolution_clock::time_point stop = std::chrono::high_resolution_clock::now();
