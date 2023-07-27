@@ -15,6 +15,7 @@ Algorithms implemented:
   - Jancey k-means + TIE
 
 Authors: Harrison Bounds & M. Emre Celebi
+
 Contact: harrison.bounds777@gmail.com or ecelebi@uca.edu
 
 Running main.py:
