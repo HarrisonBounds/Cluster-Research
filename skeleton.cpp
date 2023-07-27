@@ -452,101 +452,6 @@ map_pixels(const RGB_Image* inImg, const RGB_Cluster* cluster, const int numColo
 	return outImg;
 }
 
-/* Jancey Algorithm */
-void
-jancey(const RGB_Image* img, const int numColors, RGB_Cluster* clusters, int& numIters, const double alpha, const bool isBatch)
-{
-	numIters = 0; /* initialize output variable */
-	int numChanges, minIndex, size;
-	double deltaR, deltaG, deltaB, dist, minDist;
-	double sse;
-
-	int* member = new int[img->size];
-
-	RGB_Pixel pixel;
-	RGB_Cluster* temp = new RGB_Cluster[numColors];
-
-	do
-	{
-		numChanges = 0;
-		sse = 0.0;
-
-		reset_centers(temp, numColors);
-
-		for (int i = 0; i < img->size; i++)
-		{
-			pixel = img->data[i];
-
-			minDist = MAX_RGB_DIST;
-			minIndex = 0;
-
-			for (int j = 0; j < numColors; j++)
-			{
-				deltaR = clusters[j].center.red - pixel.red;
-				deltaG = clusters[j].center.green - pixel.green;
-				deltaB = clusters[j].center.blue - pixel.blue;
-
-				dist = deltaR * deltaR + deltaG * deltaG + deltaB * deltaB;
-				if (dist < minDist)
-				{
-					minDist = dist;
-					minIndex = j;
-				}
-			}
-
-			temp[minIndex].center.red += pixel.red;
-			temp[minIndex].center.green += pixel.green;
-			temp[minIndex].center.blue += pixel.blue;
-			temp[minIndex].size += 1;
-
-			if (minIndex != member[i])
-			{
-				numChanges += 1;
-				member[i] = minIndex;
-			}
-
-			sse += minDist;
-		}
-		/*Update centers via batch k-means algorithm*/
-		if (isBatch)
-		{
-			for (int j = 0; j < numColors; j++)
-			{
-				size = temp[j].size;
-
-				if (size != 0)
-				{
-					clusters[j].center.red = temp[j].center.red / size;
-					clusters[j].center.green = temp[j].center.green / size;
-					clusters[j].center.blue = temp[j].center.blue / size;
-				}
-			}
-		}
-		/*Update centers via jancey algorithm*/
-		else
-		{
-			for (int j = 0; j < numColors; j++)
-			{
-				size = temp[j].size;
-
-				if (size != 0)
-				{
-					clusters[j].center.red += alpha * (temp[j].center.red / size - clusters[j].center.red);
-					clusters[j].center.green += alpha * (temp[j].center.green / size - clusters[j].center.green);
-					clusters[j].center.blue += alpha * (temp[j].center.blue / size - clusters[j].center.blue);
-				}
-			}
-		}
-
-		numIters += 1;
-
-		cout << "Iteration " << numIters << ": SSE = " << sse << " [" << "# changes = " << numChanges << "]" << endl;
-
-	} while (numChanges != 0);
-
-	delete[] member;
-	delete[] temp;
-}
 
 /* Sorts an array in ascending order */
 vector<pair<double, int>>
@@ -575,164 +480,6 @@ sort_array(double arr[], const int n)
 	*/
 
 	return vp;
-}
-
-/* Jancey accelerated using TIE (Triangle Equality Elimination) */
-void
-TIE_jancey(const RGB_Image* img, const int numColors, RGB_Cluster* clusters, int& numIters, const double alpha, const bool isBatch)
-{
-	numIters = 0;
-	int numChanges, minIndex, size, tempIndex, oldMem;
-	double deltaR, deltaG, deltaB, dist, minDist, delta;
-	double sse;
-
-	RGB_Cluster clustI, clustJ;
-	RGB_Pixel pixel;
-	RGB_Cluster* temp = new RGB_Cluster[numColors];
-
-	int* member = (int*)calloc(img->size, sizeof(int));
-
-	int** p = new int* [numColors]; /*center to center distance array sorted in ascending order by index*/
-	double** ccDist = new double* [numColors]; /*2d array to store center to center distances*/
-	for (int i = 0; i < numColors; i++)
-	{
-		p[i] = new int[numColors];
-		ccDist[i] = new double[numColors];
-	}
-
-	vector<pair<double, int>> vector;
-
-	do
-	{
-		numChanges = 0;
-		sse = 0.0;
-
-		reset_centers(temp, numColors);
-
-		for (int i = 0; i < numColors; i++)
-		{
-			ccDist[i][i] = 0.0;
-			clustI = clusters[i];
-
-			for (int j = i + 1; j < numColors; j++)
-			{
-				clustJ = clusters[j];
-
-				deltaR = clustI.center.red - clustJ.center.red;
-				deltaG = clustI.center.green - clustJ.center.green;
-				deltaB = clustI.center.blue - clustJ.center.blue;
-
-				ccDist[i][j] = ccDist[j][i] = 0.25 * (deltaR * deltaR + deltaG * deltaG + deltaB * deltaB);
-			}
-
-			vector = sort_array(ccDist[i], numColors);
-
-			for (int j = 0; j < numColors; j++)
-			{
-				ccDist[i][j] = vector[j].first;
-				p[i][j] = vector[j].second;
-			}
-		}
-
-		for (int i = 0; i < img->size; i++)
-		{
-			pixel = img->data[i];
-			minIndex = oldMem = member[i];
-
-			/* calculate the distance from the pixel to its old center */
-			deltaR = clusters[minIndex].center.red - pixel.red;
-			deltaG = clusters[minIndex].center.green - pixel.green;
-			deltaB = clusters[minIndex].center.blue - pixel.blue;
-			minDist = deltaR * deltaR + deltaG * deltaG + deltaB * deltaB;
-
-			for (int j = 1; j < numColors; j++)
-			{
-				if (minDist < ccDist[minIndex][j])
-				{
-					break;
-				}
-
-				tempIndex = p[minIndex][j];
-
-				deltaR = clusters[tempIndex].center.red - pixel.red;
-				deltaG = clusters[tempIndex].center.green - pixel.green;
-				deltaB = clusters[tempIndex].center.blue - pixel.blue;
-
-				dist = deltaR * deltaR + deltaG * deltaG + deltaB * deltaB;
-				delta = dist - minDist;
-
-				if (delta < 0.0)
-				{
-					minDist = dist;
-					minIndex = tempIndex;
-					j = 0;	/* reset the search */
-				}
-				else if ((tempIndex < minIndex) && (fabs(delta) < NEAR_ZERO))
-				{
-					minIndex = tempIndex;
-					j = 0;	/* reset the search */
-				}
-
-			}
-
-			temp[minIndex].center.red += pixel.red;
-			temp[minIndex].center.green += pixel.green;
-			temp[minIndex].center.blue += pixel.blue;
-			temp[minIndex].size += 1;
-
-			if (minIndex != oldMem)
-			{
-				numChanges += 1;
-				member[i] = minIndex;
-			}
-
-			sse += minDist;
-		}
-
-		if (isBatch)
-		{
-			for (int j = 0; j < numColors; j++)
-			{
-				size = temp[j].size;
-
-				if (size != 0)
-				{
-					clusters[j].center.red = temp[j].center.red / size;
-					clusters[j].center.green = temp[j].center.green / size;
-					clusters[j].center.blue = temp[j].center.blue / size;
-				}
-			}
-		}
-		else
-		{
-			for (int j = 0; j < numColors; j++)
-			{
-				size = temp[j].size;
-
-				if (size != 0)
-				{
-					clusters[j].center.red += alpha * (temp[j].center.red / size - clusters[j].center.red);
-					clusters[j].center.green += alpha * (temp[j].center.green / size - clusters[j].center.green);
-					clusters[j].center.blue += alpha * (temp[j].center.blue / size - clusters[j].center.blue);
-				}
-			}
-		}
-
-		numIters += 1;
-
-		cout << "Iteration " << numIters << ": SSE = " << sse << " [" << "# changes = " << numChanges << "]" << endl;
-
-	} while (numChanges != 0);
-
-	delete[] member;
-	delete[] temp;
-	for (int i = 0; i < numColors; i++)
-	{
-		delete[] p[i];
-		delete[] ccDist[i];
-	}
-	delete[] p;
-	delete[] ccDist;
 }
 
 RGB_Table*
@@ -1167,6 +914,102 @@ batch_kmeans(const RGB_Image* img, const int num_colors,
 	}
 }
 
+/* Jancey Algorithm */
+void
+jancey(const RGB_Image* img, const int numColors, RGB_Cluster* clusters, int& numIters, const double alpha, const bool isBatch)
+{
+	numIters = 0; /* initialize output variable */
+	int numChanges, minIndex, size;
+	double deltaR, deltaG, deltaB, dist, minDist;
+	double sse;
+
+	int* member = new int[img->size];
+
+	RGB_Pixel pixel;
+	RGB_Cluster* temp = new RGB_Cluster[numColors];
+
+	do
+	{
+		numChanges = 0;
+		sse = 0.0;
+
+		reset_centers(temp, numColors);
+
+		for (int i = 0; i < img->size; i++)
+		{
+			pixel = img->data[i];
+
+			minDist = MAX_RGB_DIST;
+			minIndex = 0;
+
+			for (int j = 0; j < numColors; j++)
+			{
+				deltaR = clusters[j].center.red - pixel.red;
+				deltaG = clusters[j].center.green - pixel.green;
+				deltaB = clusters[j].center.blue - pixel.blue;
+
+				dist = deltaR * deltaR + deltaG * deltaG + deltaB * deltaB;
+				if (dist < minDist)
+				{
+					minDist = dist;
+					minIndex = j;
+				}
+			}
+
+			temp[minIndex].center.red += pixel.red;
+			temp[minIndex].center.green += pixel.green;
+			temp[minIndex].center.blue += pixel.blue;
+			temp[minIndex].size += 1;
+
+			if (minIndex != member[i])
+			{
+				numChanges += 1;
+				member[i] = minIndex;
+			}
+
+			sse += minDist;
+		}
+		/*Update centers via batch k-means algorithm*/
+		if (isBatch)
+		{
+			for (int j = 0; j < numColors; j++)
+			{
+				size = temp[j].size;
+
+				if (size != 0)
+				{
+					clusters[j].center.red = temp[j].center.red / size;
+					clusters[j].center.green = temp[j].center.green / size;
+					clusters[j].center.blue = temp[j].center.blue / size;
+				}
+			}
+		}
+		/*Update centers via jancey algorithm*/
+		else
+		{
+			for (int j = 0; j < numColors; j++)
+			{
+				size = temp[j].size;
+
+				if (size != 0)
+				{
+					clusters[j].center.red += alpha * (temp[j].center.red / size - clusters[j].center.red);
+					clusters[j].center.green += alpha * (temp[j].center.green / size - clusters[j].center.green);
+					clusters[j].center.blue += alpha * (temp[j].center.blue / size - clusters[j].center.blue);
+				}
+			}
+		}
+
+		numIters += 1;
+
+		cout << "Iteration " << numIters << ": SSE = " << sse << " [" << "# changes = " << numChanges << "]" << endl;
+
+	} while (numChanges != 0);
+
+	delete[] member;
+	delete[] temp;
+}
+
 /*Accelerated version of batch_kmeans*/
 void 
 tie_algorithm(const RGB_Image* img, const int num_colors,
@@ -1322,96 +1165,164 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 		}
 	}
 
-/*Janceys Kmeans algorithm - Similar to batch kmeans, with a different center update step*/
-void 
-janceys_kmeans(const RGB_Image* img, const int num_colors,
-	const int max_iters, RGB_Cluster* clusters)
+/* Jancey accelerated using TIE (Triangle Equality Elimination) */
+void
+TIE_jancey(const RGB_Image* img, const int numColors, RGB_Cluster* clusters, int& numIters, const double alpha, const bool isBatch)
+{
+	numIters = 0;
+	int numChanges, minIndex, size, tempIndex, oldMem;
+	double deltaR, deltaG, deltaB, dist, minDist, delta;
+	double sse;
+
+	RGB_Cluster clustI, clustJ;
+	RGB_Pixel pixel;
+	RGB_Cluster* temp = new RGB_Cluster[numColors];
+
+	int* member = (int*)calloc(img->size, sizeof(int));
+
+	int** p = new int* [numColors]; /*center to center distance array sorted in ascending order by index*/
+	double** ccDist = new double* [numColors]; /*2d array to store center to center distances*/
+	for (int i = 0; i < numColors; i++)
 	{
-		int num_pixels = img->size; /*Get the number of pixels in the image*/
-		int* assign = new int[num_pixels]; /*Array to store the assignment of each pixel to a cluster*/
-		double sse; /*Variable to store SSE*/
-		double delta_red, delta_green, delta_blue;
-		double dist;
-		RGB_Pixel pixel;
-		RGB_Cluster *temp_clusters;
-		double red_centroid, prev_red_centroid, green_centroid, prev_green_centroid, blue_centroid, prev_blue_centroid;
-		int alpha = 1.8;
-
-
-		temp_clusters = ( RGB_Cluster * ) malloc ( num_colors * sizeof ( RGB_Cluster ) );
-
-		/*Loop until the max number of iterations is hit : Terminate by iterations only*/
-		for (int iter = 0; iter < max_iters; iter++){
-			
-			sse = 0.0; /*Reset sse for next iteration*/
-
-			/*Reset the clusters for the next iteration*/
-			for (int j = 0; j < num_colors; j++){
-				temp_clusters[j].center.red = 0.0;
-				temp_clusters[j].center.green = 0.0;
-				temp_clusters[j].center.blue = 0.0;
-				temp_clusters[j].size = 0;
-				clusters[j].size = 0; 
-			}
-			/*Loop over all pixels and assign them to the nearest cluster*/
-			for(int i = 0; i < num_pixels; i++){
-				double min_dist = MAX_RGB_DIST; /*store the max distance in a variable*/
-				int cluster_index = 0;
-				pixel = img->data[i];
-				
-				/*Calculate the Euclidean distance between the current pixel and current cluster*/
-				for (int j = 0; j < num_colors; j++){
-					delta_red = pixel.red - clusters[j].center.red;
-					delta_green = pixel.green - clusters[j].center.green;
-					delta_blue = pixel.blue - clusters[j].center.blue;
-					dist = delta_red * delta_red + delta_green * delta_green + delta_blue * delta_blue;
-
-					/*Checking if this is the closest center*/
-					if (dist < min_dist){
-						min_dist = dist; /*Resetting min_dist*/
-						cluster_index = j; /*Assigning the closest pixel to a center*/
-					}
-				}
-				assign[i] = cluster_index; /*Store the assignment of the pixel to cluster in the array*/
-				clusters[cluster_index].size++; /*Increase cluster size to make room for new pixel*/
-				sse += min_dist; /*Accumulate the sse based on the euclidean distance of all pixels*/
-
-				/* Update the temporary center & size of the nearest cluster */
-				temp_clusters[cluster_index].center.red += pixel.red;
-				temp_clusters[cluster_index].center.green += pixel.green;
-				temp_clusters[cluster_index].center.blue += pixel.blue;
-			}
-
-			/*Recompute cluster centers*/
-			for (int j = 0; j < num_colors; j++){
-				
-				int cluster_size = clusters[j].size; /*Getting the size of each cluster*/
-
-				/*Store centroid of each cluster update*/
-				red_centroid = temp_clusters[j].center.red / cluster_size;
-				green_centroid = temp_clusters[j].center.green / cluster_size;
-				blue_centroid = temp_clusters[j].center.blue / cluster_size;
-				prev_red_centroid = temp_clusters[j-1].center.red / cluster_size;
-				prev_green_centroid = temp_clusters[j-1].center.green / cluster_size;
-				prev_blue_centroid = temp_clusters[j-1].center.blue / cluster_size;
-
-				/*Update centers based on janceys kmeans using alpha*/
-				clusters[j].center.red = (alpha * red_centroid) + ((1 - alpha) * prev_red_centroid);
-				clusters[j].center.green = (alpha * green_centroid) + ((1 - alpha) * prev_green_centroid);
-				clusters[j].center.blue = (alpha * blue_centroid) + ((1 - alpha) * prev_blue_centroid);
-
-
-				// /*Center update*/
-				// clusters[j].center.red = temp_clusters[j].center.red / cluster_size;
-				// clusters[j].center.green = temp_clusters[j].center.green / cluster_size;
-				// clusters[j].center.blue = temp_clusters[j].center.blue / cluster_size;
-				
-			}
-			
-			cout << "Iteration " << iter + 1 << ": " << "SSE = " << sse << endl;
-
-		}
+		p[i] = new int[numColors];
+		ccDist[i] = new double[numColors];
 	}
+
+	vector<pair<double, int>> vector;
+
+	do
+	{
+		numChanges = 0;
+		sse = 0.0;
+
+		reset_centers(temp, numColors);
+
+		for (int i = 0; i < numColors; i++)
+		{
+			ccDist[i][i] = 0.0;
+			clustI = clusters[i];
+
+			for (int j = i + 1; j < numColors; j++)
+			{
+				clustJ = clusters[j];
+
+				deltaR = clustI.center.red - clustJ.center.red;
+				deltaG = clustI.center.green - clustJ.center.green;
+				deltaB = clustI.center.blue - clustJ.center.blue;
+
+				ccDist[i][j] = ccDist[j][i] = 0.25 * (deltaR * deltaR + deltaG * deltaG + deltaB * deltaB);
+			}
+
+			vector = sort_array(ccDist[i], numColors);
+
+			for (int j = 0; j < numColors; j++)
+			{
+				ccDist[i][j] = vector[j].first;
+				p[i][j] = vector[j].second;
+			}
+		}
+
+		for (int i = 0; i < img->size; i++)
+		{
+			pixel = img->data[i];
+			minIndex = oldMem = member[i];
+
+			/* calculate the distance from the pixel to its old center */
+			deltaR = clusters[minIndex].center.red - pixel.red;
+			deltaG = clusters[minIndex].center.green - pixel.green;
+			deltaB = clusters[minIndex].center.blue - pixel.blue;
+			minDist = deltaR * deltaR + deltaG * deltaG + deltaB * deltaB;
+
+			for (int j = 1; j < numColors; j++)
+			{
+				if (minDist < ccDist[minIndex][j])
+				{
+					break;
+				}
+
+				tempIndex = p[minIndex][j];
+
+				deltaR = clusters[tempIndex].center.red - pixel.red;
+				deltaG = clusters[tempIndex].center.green - pixel.green;
+				deltaB = clusters[tempIndex].center.blue - pixel.blue;
+
+				dist = deltaR * deltaR + deltaG * deltaG + deltaB * deltaB;
+				delta = dist - minDist;
+
+				if (delta < 0.0)
+				{
+					minDist = dist;
+					minIndex = tempIndex;
+					j = 0;	/* reset the search */
+				}
+				else if ((tempIndex < minIndex) && (fabs(delta) < NEAR_ZERO))
+				{
+					minIndex = tempIndex;
+					j = 0;	/* reset the search */
+				}
+
+			}
+
+			temp[minIndex].center.red += pixel.red;
+			temp[minIndex].center.green += pixel.green;
+			temp[minIndex].center.blue += pixel.blue;
+			temp[minIndex].size += 1;
+
+			if (minIndex != oldMem)
+			{
+				numChanges += 1;
+				member[i] = minIndex;
+			}
+
+			sse += minDist;
+		}
+
+		if (isBatch)
+		{
+			for (int j = 0; j < numColors; j++)
+			{
+				size = temp[j].size;
+
+				if (size != 0)
+				{
+					clusters[j].center.red = temp[j].center.red / size;
+					clusters[j].center.green = temp[j].center.green / size;
+					clusters[j].center.blue = temp[j].center.blue / size;
+				}
+			}
+		}
+		else
+		{
+			for (int j = 0; j < numColors; j++)
+			{
+				size = temp[j].size;
+
+				if (size != 0)
+				{
+					clusters[j].center.red += alpha * (temp[j].center.red / size - clusters[j].center.red);
+					clusters[j].center.green += alpha * (temp[j].center.green / size - clusters[j].center.green);
+					clusters[j].center.blue += alpha * (temp[j].center.blue / size - clusters[j].center.blue);
+				}
+			}
+		}
+
+		numIters += 1;
+
+		cout << "Iteration " << numIters << ": SSE = " << sse << " [" << "# changes = " << numChanges << "]" << endl;
+
+	} while (numChanges != 0);
+
+	delete[] member;
+	delete[] temp;
+	for (int i = 0; i < numColors; i++)
+	{
+		delete[] p[i];
+		delete[] ccDist[i];
+	}
+	delete[] p;
+	delete[] ccDist;
+}
+
 
 /*Maximin algorithm to initialize k-means*/
 RGB_Cluster *
