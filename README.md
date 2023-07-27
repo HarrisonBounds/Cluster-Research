@@ -18,7 +18,7 @@ Authors: Harrison Bounds & M. Emre Celebi
 
 Contact: harrison.bounds777@gmail.com or ecelebi@uca.edu
 
-Running main.py:
+### Running main.cpp:
 - Build the cpp file to get an executable
 - Takes two command line arguments
   - location of PPM formatted image
