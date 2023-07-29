@@ -667,6 +667,7 @@ void
 jancey(const RGB_Image* img, const int numColors, RGB_Cluster* clusters, int& numIters, const double alpha, const bool isBatch, double& mse)
 {
 	numIters = 0; /* initialize output variable */
+	mse = 0.0;
 	int numChanges, minIndex, size;
 	double deltaR, deltaG, deltaB, dist, minDist;
 	double sse;
@@ -765,6 +766,7 @@ void
 weighted_jancey(const RGB_Table* colorTable, const int numColors, RGB_Cluster* clusters, int& numIters, const double alpha, const bool isBatch, double& mse)
 {
 	numIters = 0; /* initialize output variable */
+	mse = 0.0;
 	int numChanges, minIndex, size;
 	double deltaR, deltaG, deltaB, dist, minDist;
 	int colorTableSize = colorTable->size;
@@ -860,6 +862,7 @@ void
 TIE_jancey(const RGB_Image* img, const int numColors, RGB_Cluster* clusters, int& numIters, const double alpha, const bool isBatch, double& mse)
 {
 	numIters = 0;
+	mse = 0.0;
 	int numChanges, minIndex, size, tempIndex, oldMem;
 	double deltaR, deltaG, deltaB, dist, minDist, delta;
 	double sse;
@@ -1019,6 +1022,7 @@ void
 weighted_TIE_jancey(const RGB_Table* colorTable, const int numColors, RGB_Cluster* clusters, int& numIters, const double alpha, const bool isBatch, double& mse)
 {
 	numIters = 0;
+	mse = 0.0;
 	int numChanges, minIndex, size, tempIndex, oldMem;
 	int colorTableSize = colorTable->size;
 	double deltaR, deltaG, deltaB, dist, minDist, delta;
@@ -1294,10 +1298,13 @@ main(int argc, char* argv[])
 	img = read_PPM(filename);
 
 	/*For each K value, perform the 8 algorithms in succession on different images*/
-	for(int k = 0; k < numColors; k++)
+	for(int i = 0; i < numColors; i++)
 	{
+		cout << "K = " << k[i] << endl;
+		cout << "===================" << endl;
+
 		/*Initialize centers using maximin*/
-		cluster = maximin(img, k);
+		cluster = maximin(img, k[i]);
 
 		/*Initialize RGB table for weighted algorithms*/
 		table = calc_color_table(img);
@@ -1307,7 +1314,7 @@ main(int argc, char* argv[])
 		std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
 
 		/*Run Clustering function*/
-		jancey(img, k, cluster, numIters, alpha, true, mse); /*Batch k-means*/
+		jancey(img, k[i], cluster, numIters, alpha, true, mse); /*Batch k-means*/
 
 		/* Stop Timer*/
 		std::chrono::high_resolution_clock::time_point stop = std::chrono::high_resolution_clock::now();
@@ -1315,12 +1322,17 @@ main(int argc, char* argv[])
 		/* Execution Time*/
 		std::chrono::milliseconds elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
 
+		cout << filename << ", " << "batch k-means, " << mse << ", " << numIters << ", " << elapsed.count() << endl;
+
+		/*Initialize centers using maximin*/
+		cluster = maximin(img, k[i]);
+
 		/* Start Timer*/
 		/*Declare data types of start, stop, and elapsed*/
 		std::chrono::high_resolution_clock::time_point start1 = std::chrono::high_resolution_clock::now();
 
 		/*Run Clustering function*/
-		jancey(img, k, cluster, numIters, alpha, false, mse); /*Jancey k-means*/
+		jancey(img, k[i], cluster, numIters, alpha, false, mse); /*Jancey k-means*/
 
 		/* Stop Timer*/
 		std::chrono::high_resolution_clock::time_point stop1 = std::chrono::high_resolution_clock::now();
@@ -1328,12 +1340,17 @@ main(int argc, char* argv[])
 		/* Execution Time*/
 		std::chrono::milliseconds elapsed1 = std::chrono::duration_cast<std::chrono::milliseconds>(stop1 - start1);
 
+		cout << filename << ", " << "jancey k-means, " << mse << ", " << numIters << ", " << elapsed1.count() << endl;
+
+		/*Initialize centers using maximin*/
+		cluster = maximin(img, k[i]);
+
 		/* Start Timer*/
 		/*Declare data types of start, stop, and elapsed*/
 		std::chrono::high_resolution_clock::time_point start2 = std::chrono::high_resolution_clock::now();
 
 		/*Run Clustering function*/
-		weighted_jancey(table, k, cluster, numIters, alpha, true); /*Weighted Batch-kmeans*/
+		weighted_jancey(table, k[i], cluster, numIters, alpha, true, mse); /*Weighted Batch-kmeans*/
 
 		/* Stop Timer*/
 		std::chrono::high_resolution_clock::time_point stop2 = std::chrono::high_resolution_clock::now();
@@ -1341,12 +1358,17 @@ main(int argc, char* argv[])
 		/* Execution Time*/
 		std::chrono::milliseconds elapsed2 = std::chrono::duration_cast<std::chrono::milliseconds>(stop2 - start2);
 
+		cout << filename << ", " << "weighted batch k-means, " << mse << ", " << numIters << ", " << elapsed2.count() << endl;
+
+		/*Initialize centers using maximin*/
+		cluster = maximin(img, k[i]);
+
 		/* Start Timer*/
 		/*Declare data types of start, stop, and elapsed*/
 		std::chrono::high_resolution_clock::time_point start3 = std::chrono::high_resolution_clock::now();
 
 		/*Run Clustering function*/
-		weighted_jancey(table, k, cluster, numIters, alpha, false); /*Weighted Jancey-kmeans*/
+		weighted_jancey(table, k[i], cluster, numIters, alpha, false, mse); /*Weighted Jancey-kmeans*/
 
 		/* Stop Timer*/
 		std::chrono::high_resolution_clock::time_point stop3 = std::chrono::high_resolution_clock::now();
@@ -1354,12 +1376,17 @@ main(int argc, char* argv[])
 		/* Execution Time*/
 		std::chrono::milliseconds elapsed3 = std::chrono::duration_cast<std::chrono::milliseconds>(stop3 - start3);
 
+		cout << filename << ", " << "weighted jancey k-means, " << mse << ", " << numIters << ", " << elapsed3.count() << endl;
+
+		/*Initialize centers using maximin*/
+		cluster = maximin(img, k[i]);
+
 		/* Start Timer*/
 		/*Declare data types of start, stop, and elapsed*/
 		std::chrono::high_resolution_clock::time_point start4 = std::chrono::high_resolution_clock::now();
 
 		/*Run Clustering function*/
-		TIE_jancey(img, k, cluster, numIters, alpha, true); /*TIE + Batch-kmeans*/
+		TIE_jancey(img, k[i], cluster, numIters, alpha, true, mse); /*TIE + Batch-kmeans*/
 
 		/* Stop Timer*/
 		std::chrono::high_resolution_clock::time_point stop4 = std::chrono::high_resolution_clock::now();
@@ -1367,12 +1394,17 @@ main(int argc, char* argv[])
 		/* Execution Time*/
 		std::chrono::milliseconds elapsed4 = std::chrono::duration_cast<std::chrono::milliseconds>(stop4 - start4);
 
+		cout << filename << ", " << "TIE + batch k-means, " << mse << ", " << numIters << ", " << elapsed4.count() << endl;
+
+		/*Initialize centers using maximin*/
+		cluster = maximin(img, k[i]);
+
 		/* Start Timer*/
 		/*Declare data types of start, stop, and elapsed*/
 		std::chrono::high_resolution_clock::time_point start5 = std::chrono::high_resolution_clock::now();
 
 		/*Run Clustering function*/
-		TIE_jancey(img, k, cluster, numIters, alpha, false); /*TIE + Jancey-kmeans*/
+		TIE_jancey(img, k[i], cluster, numIters, alpha, false, mse); /*TIE + Jancey-kmeans*/
 
 		/* Stop Timer*/
 		std::chrono::high_resolution_clock::time_point stop5 = std::chrono::high_resolution_clock::now();
@@ -1380,12 +1412,17 @@ main(int argc, char* argv[])
 		/* Execution Time*/
 		std::chrono::milliseconds elapsed5 = std::chrono::duration_cast<std::chrono::milliseconds>(stop5 - start5);
 
+		cout << filename << ", " << "TIE + jancey k-means, " << mse << ", " << numIters << ", " << elapsed5.count() << endl;
+
+		/*Initialize centers using maximin*/
+		cluster = maximin(img, k[i]);
+
 		/* Start Timer*/
 		/*Declare data types of start, stop, and elapsed*/
 		std::chrono::high_resolution_clock::time_point start6 = std::chrono::high_resolution_clock::now();
 
 		/*Run Clustering function*/
-		weighted_TIE_jancey(table, k, cluster, numIters, alpha, true); /*Weighted TIE + Batch-kmeans*/
+		weighted_TIE_jancey(table, k[i], cluster, numIters, alpha, true, mse); /*Weighted TIE + Batch-kmeans*/
 
 		/* Stop Timer*/
 		std::chrono::high_resolution_clock::time_point stop6 = std::chrono::high_resolution_clock::now();
@@ -1393,18 +1430,26 @@ main(int argc, char* argv[])
 		/* Execution Time*/
 		std::chrono::milliseconds elapsed6 = std::chrono::duration_cast<std::chrono::milliseconds>(stop6 - start6);
 
+		cout << filename << ", " << "weighted TIE + batch k-means, " << mse << ", " << numIters << ", " << elapsed6.count() << endl;
+
+		/*Initialize centers using maximin*/
+		cluster = maximin(img, k[i]);
+
 		/* Start Timer*/
 		/*Declare data types of start, stop, and elapsed*/
 		std::chrono::high_resolution_clock::time_point start7 = std::chrono::high_resolution_clock::now();
 
 		/*Run Clustering function*/
-		weighted_TIE_jancey(table, k, cluster, numIters, alpha, false); /*Weighted TIE + Jancey-kmeans*/
+		weighted_TIE_jancey(table, k[i], cluster, numIters, alpha, false, mse); /*Weighted TIE + Jancey-kmeans*/
 
 		/* Stop Timer*/
 		std::chrono::high_resolution_clock::time_point stop7 = std::chrono::high_resolution_clock::now();
 
 		/* Execution Time*/
 		std::chrono::milliseconds elapsed7 = std::chrono::duration_cast<std::chrono::milliseconds>(stop7 - start7);
+
+		cout << filename << ", " << "Weighted TIE + jancey k-means, " << mse << ", " << numIters << ", " << elapsed7.count() << endl;
+
 	}
 
 	free(cluster);
