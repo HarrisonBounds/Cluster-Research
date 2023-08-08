@@ -1269,7 +1269,9 @@ main(int argc, char* argv[])
 	int numIters;
 	double mse;
 	double bkm_average_elapsed;
-	double twbkm_average_elapsed;						
+	double jkm_average_elapsed;
+	double twbkm_average_elapsed;
+	double twjkm_average_elapsed;						
 	RGB_Image* img;
 	RGB_Image* out_img;
 	RGB_Cluster* cluster;
@@ -1300,12 +1302,13 @@ main(int argc, char* argv[])
 
 	/*EXPERIMENT 1*/
 
-	/*Objective 1 - How fast is TIE + Batch K-Means compared to its vanilla counterpart (Batch K-means)*/
+	/*OBJECTIVE 1 - How fast is TIE + Weighted Batch K-Means (TWBKM) compared to its vanilla counterpart Batch K-means (BKM)*/
 
 	for (int i = 0; i < numImages; i++)
 	{
 		/* Read Image*/
 		img = read_PPM(filenames[i]);
+		table = calc_color_table(img);
 		for (int j = 0; j < numColors; j++)
 		{
 			cluster = maximin(img, colors[j]);
@@ -1332,7 +1335,7 @@ main(int argc, char* argv[])
 				/*Start Timer*/
 				std::chrono::high_resolution_clock::time_point twbkm_start = std::chrono::high_resolution_clock::now();
 
-				TIE_jancey(img, colors[j], cluster, numIters, alpha, true, mse); /*Running TIE + Batch K-Means Algorithm (isBatch == true)*/
+				weighted_TIE_jancey(table, colors[j], cluster, numIters, alpha, true, mse); /*Running TIE + Batch K-Means Algorithm (isBatch == true)*/
 
 				/* Stop Timer*/
 				std::chrono::high_resolution_clock::time_point twbkm_stop = std::chrono::high_resolution_clock::now();
@@ -1351,6 +1354,65 @@ main(int argc, char* argv[])
 			cout << filenames[i] << ", " << colors[j] << ", "  << "BKM" << ", " << bkm_average_elapsed << ", " << "TWBKM" << ", " << twbkm_average_elapsed << endl;
 		}
 	}
+
+	/*OBJECTIVE 2 - How fast is TIE + Jancey K-Means compared to its vanilla counterpart (Jancey K-means)*/
+
+		for (int i = 0; i < numImages; i++)
+	{
+		/* Read Image*/
+		img = read_PPM(filenames[i]);
+		table = calc_color_table(img);
+		for (int j = 0; j < numColors; j++)
+		{
+			cluster = maximin(img, colors[j]);
+			bkm_average_elapsed = 0.0;
+			twbkm_average_elapsed = 0.0;
+			for (int k = 0; k < repetitions; k++)
+			{
+				/*JKM Algorithm*/
+				/*Start Timer*/
+				std::chrono::high_resolution_clock::time_point jkm_start = std::chrono::high_resolution_clock::now();
+
+				jancey(img, colors[j], cluster, numIters, alpha, false, mse); /*Running Jancey K-Means Algorithm (isBatch == false)*/
+
+				/* Stop Timer*/
+				std::chrono::high_resolution_clock::time_point jkm_stop = std::chrono::high_resolution_clock::now();
+
+				/* Execution Time*/
+				std::chrono::milliseconds jkm_elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(jkm_stop - jkm_start);
+
+				/*======================================================================================================================*/
+
+				/*TWBKM Algorithm*/
+
+				/*Start Timer*/
+				std::chrono::high_resolution_clock::time_point twjkm_start = std::chrono::high_resolution_clock::now();
+
+				weighted_TIE_jancey(table, colors[j], cluster, numIters, alpha, false, mse); /*Running TIE + Jancey K-Means Algorithm (isBatch == false)*/
+
+				/* Stop Timer*/
+				std::chrono::high_resolution_clock::time_point twjkm_stop = std::chrono::high_resolution_clock::now();
+
+				/* Execution Time*/
+				std::chrono::milliseconds twjkm_elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(twjkm_stop - twjkm_start);
+
+				/*Average cpu times*/
+				bkm_average_elapsed += jkm_elapsed.count();
+				twbkm_average_elapsed += twjkm_elapsed.count();
+			}
+
+			jkm_average_elapsed = jkm_average_elapsed / repetitions;
+			twjkm_average_elapsed = twjkm_average_elapsed / repetitions;
+
+			cout << filenames[i] << ", " << colors[j] << ", "  << "JKM" << ", " << jkm_average_elapsed << ", " << "TWJKM" << ", " << twjkm_average_elapsed << endl;
+		}
+	}
+
+	/*===============================================================================================================================================================*/
+
+	/*EXPERIMENT 2*/
+
+	/*OBJECTIVE 1 - */
 
 
 	free(cluster);
