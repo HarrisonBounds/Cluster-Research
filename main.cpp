@@ -1383,7 +1383,7 @@ main(int argc, char* argv[])
 
 				/*======================================================================================================================*/
 
-				/*TWBKM Algorithm*/
+				/*TWJKM Algorithm*/
 
 				/*Start Timer*/
 				std::chrono::high_resolution_clock::time_point twjkm_start = std::chrono::high_resolution_clock::now();
