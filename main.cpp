@@ -1268,39 +1268,39 @@ main(int argc, char* argv[])
 	const char* filenames[numImages] = {"images/kodim05.ppm", "images/kodim23.ppm"};
 	int numIters;
 	double mse;
+	double twbkm_mse;
+	double twjkm_mse1;
+	double twjkm_mse2;
+	double twjkm_mse3;
+	double twjkm_mse4;
+	double twjkm_mse5;
+	double twjkm_alpha1 = 1.2;
+	double twjkm_alpha2 = 1.4; 
+	double twjkm_alpha3 = 1.6; 
+	double twjkm_alpha4 = 1.8; 
+	double twjkm_alpha5 = 1.99; /*(Algorithm not guarnteed to converge at alpha = 2.0)*/
 	double bkm_average_elapsed;
 	double jkm_average_elapsed;
 	double twbkm_average_elapsed;
-	double twjkm_average_elapsed;						
+	double twbkm_average_elapsed1; 
+	double twjkm_average_elapsed;
+	double twjkm_average_elapsed1;
+	double twjkm_average_elapsed2;
+	double twjkm_average_elapsed3;
+	double twjkm_average_elapsed4;
+	double twjkm_average_elapsed5;
+
 	RGB_Image* img;
 	RGB_Image* out_img;
 	RGB_Cluster* cluster;
 	RGB_Table* table; 
-	
-	// if (argc == 3) {
-	// 	/* Image filename */
-	// 	filename = argv[1];
 
-	// 	/* k, number of clusters */
-	// 	k = atoi(argv[2]);
-
-	// }
-	// else if (argc > 3) {
-	// 	printf("Too many arguments supplied.\n");
-	// 	return 0;
-	// }
-	// else {
-	// 	printf("Two arguments expected: image filename and number of clusters.\n");
-	// 	return 0;
-	// }
 
 	srand(time(NULL));
 
-	/* Print Args*/
-	//printf("%s %d\n", filename, k);
-
-
 	/*EXPERIMENT 1*/
+	cout << "EXPERIMENT 1\n";
+	cout << "==========\n";
 
 	/*OBJECTIVE 1 - How fast is TIE + Weighted Batch K-Means (TWBKM) compared to its vanilla counterpart Batch K-means (BKM)*/
 
@@ -1335,7 +1335,7 @@ main(int argc, char* argv[])
 				/*Start Timer*/
 				std::chrono::high_resolution_clock::time_point twbkm_start = std::chrono::high_resolution_clock::now();
 
-				weighted_TIE_jancey(table, colors[j], cluster, numIters, alpha, true, mse); /*Running TIE + Batch K-Means Algorithm (isBatch == true)*/
+				weighted_TIE_jancey(table, colors[j], cluster, numIters, alpha, true, mse); /*Running TIE + Weighted Batch K-Means Algorithm (isBatch == true)*/
 
 				/* Stop Timer*/
 				std::chrono::high_resolution_clock::time_point twbkm_stop = std::chrono::high_resolution_clock::now();
@@ -1347,15 +1347,16 @@ main(int argc, char* argv[])
 				bkm_average_elapsed += bkm_elapsed.count();
 				twbkm_average_elapsed += twbkm_elapsed.count();
 			}
-
+			/*Getting Average Run Times*/
 			bkm_average_elapsed = bkm_average_elapsed / repetitions;
 			twbkm_average_elapsed = twbkm_average_elapsed / repetitions;
 
+			/*OUTPUT*/
 			cout << filenames[i] << ", " << colors[j] << ", "  << "BKM" << ", " << bkm_average_elapsed << ", " << "TWBKM" << ", " << twbkm_average_elapsed << endl;
 		}
 	}
 
-	/*OBJECTIVE 2 - How fast is TIE + Jancey K-Means compared to its vanilla counterpart (Jancey K-means)*/
+	/*OBJECTIVE 2 - How fast is TIE + Weighted Jancey K-Means compared to its vanilla counterpart (Jancey K-means)*/
 
 		for (int i = 0; i < numImages; i++)
 	{
@@ -1365,8 +1366,8 @@ main(int argc, char* argv[])
 		for (int j = 0; j < numColors; j++)
 		{
 			cluster = maximin(img, colors[j]);
-			bkm_average_elapsed = 0.0;
-			twbkm_average_elapsed = 0.0;
+			jkm_average_elapsed = 0.0;
+			twjkm_average_elapsed = 0.0;
 			for (int k = 0; k < repetitions; k++)
 			{
 				/*JKM Algorithm*/
@@ -1388,7 +1389,7 @@ main(int argc, char* argv[])
 				/*Start Timer*/
 				std::chrono::high_resolution_clock::time_point twjkm_start = std::chrono::high_resolution_clock::now();
 
-				weighted_TIE_jancey(table, colors[j], cluster, numIters, alpha, false, mse); /*Running TIE + Jancey K-Means Algorithm (isBatch == false)*/
+				weighted_TIE_jancey(table, colors[j], cluster, numIters, alpha, false, mse); /*Running TIE + Weighted Jancey K-Means Algorithm (isBatch == false)*/
 
 				/* Stop Timer*/
 				std::chrono::high_resolution_clock::time_point twjkm_stop = std::chrono::high_resolution_clock::now();
@@ -1397,13 +1398,14 @@ main(int argc, char* argv[])
 				std::chrono::milliseconds twjkm_elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(twjkm_stop - twjkm_start);
 
 				/*Average cpu times*/
-				bkm_average_elapsed += jkm_elapsed.count();
-				twbkm_average_elapsed += twjkm_elapsed.count();
+				jkm_average_elapsed += jkm_elapsed.count();
+				twjkm_average_elapsed += twjkm_elapsed.count();
 			}
-
+			/*Getting Average Run Times*/
 			jkm_average_elapsed = jkm_average_elapsed / repetitions;
 			twjkm_average_elapsed = twjkm_average_elapsed / repetitions;
 
+			/*OUTPUT*/
 			cout << filenames[i] << ", " << colors[j] << ", "  << "JKM" << ", " << jkm_average_elapsed << ", " << "TWJKM" << ", " << twjkm_average_elapsed << endl;
 		}
 	}
@@ -1411,10 +1413,140 @@ main(int argc, char* argv[])
 	/*===============================================================================================================================================================*/
 
 	/*EXPERIMENT 2*/
+	cout << "\n\nEXPERIMENT 2\n";
+	cout << "==========\n";
+	/*OBJECTIVE 1 - How fast is TIE + Weighted Batch K-Means (TWBKM) compared to its Jancey counterpart TIE + Weighted Jancey K-Means (TWJKM)*/
 
-	/*OBJECTIVE 1 - */
+	/*Objective 2 - How effective is TWBKM comparted to its Jancey counterpart? In other words, which one gives a lower MSE?*/
+
+	for (int i  = 0; i < numImages; i++)
+	{
+		/* Read Image*/
+		img = read_PPM(filenames[i]);
+		table = calc_color_table(img);
+		for (int j = 0; j < numColors; j++)
+		{
+			cluster = maximin(img, colors[j]);
+			twbkm_average_elapsed1 = 0.0;
+			twjkm_average_elapsed1 = 0.0;
+			twjkm_average_elapsed2 = 0.0;
+			twjkm_average_elapsed3 = 0.0;
+			twjkm_average_elapsed4 = 0.0;
+			twjkm_average_elapsed5 = 0.0;
+			
+			for (int k = 0; k < repetitions; k++)
+			{
+				/*TWBKM*/
+
+				/*Start Timer*/
+				std::chrono::high_resolution_clock::time_point twbkm_start1 = std::chrono::high_resolution_clock::now();
+
+				weighted_TIE_jancey(table, colors[j], cluster, numIters, alpha, true, twbkm_mse);
+
+				/* Stop Timer*/
+				std::chrono::high_resolution_clock::time_point twbkm_stop1 = std::chrono::high_resolution_clock::now();
+
+				/* Execution Time*/
+				std::chrono::milliseconds twbkm_elapsed1 = std::chrono::duration_cast<std::chrono::milliseconds>(twbkm_stop1 - twbkm_start1);
+
+				/*============================================================================================================================*/
+
+				/*TWJKM alpha = 1.2*/
+				/*Start Timer*/
+				std::chrono::high_resolution_clock::time_point twjkm_start1 = std::chrono::high_resolution_clock::now();
+
+				weighted_TIE_jancey(table, colors[j], cluster, numIters, twjkm_alpha1, false, twjkm_mse1);
+
+				/* Stop Timer*/
+				std::chrono::high_resolution_clock::time_point twjkm_stop1 = std::chrono::high_resolution_clock::now();
+
+				/* Execution Time*/
+				std::chrono::milliseconds twjkm_elapsed1 = std::chrono::duration_cast<std::chrono::milliseconds>(twjkm_stop1 - twjkm_start1);
+
+				/*============================================================================================================================*/
+
+				/*TWJKM alpha = 1.4*/
+				/*Start Timer*/
+				std::chrono::high_resolution_clock::time_point twjkm_start2 = std::chrono::high_resolution_clock::now();
+
+				weighted_TIE_jancey(table, colors[j], cluster, numIters, twjkm_alpha2, false, twjkm_mse2);
+
+				/* Stop Timer*/
+				std::chrono::high_resolution_clock::time_point twjkm_stop2 = std::chrono::high_resolution_clock::now();
+
+				/* Execution Time*/
+				std::chrono::milliseconds twjkm_elapsed2 = std::chrono::duration_cast<std::chrono::milliseconds>(twjkm_stop2 - twjkm_start2);
+
+				/*============================================================================================================================*/
+
+				/*TWJKM alpha = 1.6*/
+				/*Start Timer*/
+				std::chrono::high_resolution_clock::time_point twjkm_start3 = std::chrono::high_resolution_clock::now();
+
+				weighted_TIE_jancey(table, colors[j], cluster, numIters, twjkm_alpha3, false, twjkm_mse3);
+
+				/* Stop Timer*/
+				std::chrono::high_resolution_clock::time_point twjkm_stop3 = std::chrono::high_resolution_clock::now();
+
+				/* Execution Time*/
+				std::chrono::milliseconds twjkm_elapsed3 = std::chrono::duration_cast<std::chrono::milliseconds>(twjkm_stop3 - twjkm_start3);
+
+				/*============================================================================================================================*/
+
+				/*TWJKM alpha = 1.8*/
+				/*Start Timer*/
+				std::chrono::high_resolution_clock::time_point twjkm_start4 = std::chrono::high_resolution_clock::now();
+
+				weighted_TIE_jancey(table, colors[j], cluster, numIters, twjkm_alpha4, false, twjkm_mse4);
+
+				/* Stop Timer*/
+				std::chrono::high_resolution_clock::time_point twjkm_stop4 = std::chrono::high_resolution_clock::now();
+
+				/* Execution Time*/
+				std::chrono::milliseconds twjkm_elapsed4 = std::chrono::duration_cast<std::chrono::milliseconds>(twjkm_stop4 - twjkm_start4);
+
+				/*============================================================================================================================*/
+
+				/*TWJKM alpha = 1.99 (algorithm is NOT guarnteed to converge for alpha = 2.0)*/
+				/*Start Timer*/
+				std::chrono::high_resolution_clock::time_point twjkm_start5 = std::chrono::high_resolution_clock::now();
+
+				weighted_TIE_jancey(table, colors[j], cluster, numIters, twjkm_alpha5, false, twjkm_mse5);
+
+				/* Stop Timer*/
+				std::chrono::high_resolution_clock::time_point twjkm_stop5 = std::chrono::high_resolution_clock::now();
+
+				/* Execution Time*/
+				std::chrono::milliseconds twjkm_elapsed5 = std::chrono::duration_cast<std::chrono::milliseconds>(twjkm_stop5 - twjkm_start5);
 
 
+				twbkm_average_elapsed1 += twbkm_elapsed1.count();
+				twjkm_average_elapsed1 += twjkm_elapsed1.count();
+				twjkm_average_elapsed2 += twjkm_elapsed2.count();
+				twjkm_average_elapsed3 += twjkm_elapsed3.count();
+				twjkm_average_elapsed4 += twjkm_elapsed4.count();
+				twjkm_average_elapsed5 += twjkm_elapsed5.count();
+			}
+
+			/*Getting Average Run Times*/
+			twbkm_average_elapsed1 = twbkm_average_elapsed1 / repetitions;
+			twjkm_average_elapsed1 = twjkm_average_elapsed1 / repetitions;
+			twjkm_average_elapsed2 = twjkm_average_elapsed2 / repetitions;
+			twjkm_average_elapsed3 = twjkm_average_elapsed3 / repetitions;
+			twjkm_average_elapsed4 = twjkm_average_elapsed4 / repetitions;
+			twjkm_average_elapsed5 = twjkm_average_elapsed5 / repetitions;
+
+			/*OUTPUT*/
+			cout << filenames[i] << ", " << colors[j] << ", " << "TWBKM" << ", " << twbkm_average_elapsed1 << ", " << twbkm_mse << ", "
+			<< "TWJKM" << ", " << twjkm_alpha1 << ", " << twjkm_mse1 << ", " << twjkm_average_elapsed1 << ", "
+			<< "TWJKM" << ", " << twjkm_alpha2 << ", " << twjkm_mse2 << ", " << twjkm_average_elapsed2 << ", "
+			<< "TWJKM" << ", " << twjkm_alpha3 << ", " << twjkm_mse3 << ", " << twjkm_average_elapsed3 << ", "
+			<< "TWJKM" << ", " << twjkm_alpha4 << ", " << twjkm_mse4 << ", " << twjkm_average_elapsed4 << ", "
+			<< "TWJKM" << ", " << twjkm_alpha5 << ", " << twjkm_mse5 << ", " << twjkm_average_elapsed5 << ", " << endl;
+		}
+	}
+
+	cout << "DONE" << endl;
 	free(cluster);
 
 	return 0;
