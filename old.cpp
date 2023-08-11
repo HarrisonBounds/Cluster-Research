@@ -152,3 +152,83 @@ tie_algorithm(const RGB_Image* img, const int num_colors,
 			cout << "Iteration " << iter + 1 << " SSE: " << sse << endl;
 		}
 	}
+
+	/*
+   For application of the batchk k-means algorithm to color quantization, see
+   M. E. Celebi, Improving the Performance of K-Means for Color Quantization,
+   Image and Vision Computing, vol. 29, no. 4, pp. 260-271, 2011.
+ */
+ /* Color quantization using the batch k-means algorithm */
+void 
+batch_kmeans(const RGB_Image* img, const int num_colors,
+	const int max_iters, RGB_Cluster* clusters)
+{
+	int num_pixels = img->size; /*Get the number of pixels in the image*/
+	int* assign = new int[num_pixels]; /*Array to store the assignment of each pixel to a cluster*/
+	double sse; /*Variable to store SSE*/
+	double delta_red, delta_green, delta_blue;
+	double dist;
+	RGB_Pixel pixel;
+	RGB_Cluster *temp_clusters;
+
+
+	temp_clusters = ( RGB_Cluster * ) malloc ( num_colors * sizeof ( RGB_Cluster ) );
+
+	/*Loop until the max number of iterations is hit : Terminate by iterations only*/
+	for (int iter = 0; iter < max_iters; iter++){
+		
+		sse = 0.0; /*Reset sse for next iteration*/
+
+		/*Reset the clusters for the next iteration*/
+		for (int j = 0; j < num_colors; j++){
+			temp_clusters[j].center.red = 0.0;
+			temp_clusters[j].center.green = 0.0;
+			temp_clusters[j].center.blue = 0.0;
+			temp_clusters[j].size = 0;
+			clusters[j].size = 0; 
+		}
+		/*Loop over all pixels and assign them to the nearest cluster*/
+		for(int i = 0; i < num_pixels; i++){
+			double min_dist = MAX_RGB_DIST; /*store the max distance in a variable*/
+			int cluster_index = 0;
+			pixel = img->data[i];
+			
+			/*Calculate the Euclidean distance between the current pixel and current cluster*/
+			for (int j = 0; j < num_colors; j++){
+				delta_red = pixel.red - clusters[j].center.red;
+				delta_green = pixel.green - clusters[j].center.green;
+				delta_blue = pixel.blue - clusters[j].center.blue;
+				dist = delta_red * delta_red + delta_green * delta_green + delta_blue * delta_blue;
+
+				/*Checking if this is the closest center*/
+				if (dist < min_dist){
+					min_dist = dist; /*Resetting min_dist*/
+					cluster_index = j; /*Assigning the closest pixel to a center*/
+				}
+			}
+			assign[i] = cluster_index; /*Store the assignment of the pixel to cluster in the array*/
+			clusters[cluster_index].size++; /*Increase size of cluster based on the assigned index*/
+			sse += min_dist; /*Accumulate the sse based on the euclidean distance of all pixels*/
+
+			/* Update the temporary center & size of the nearest cluster */
+			temp_clusters[cluster_index].center.red += pixel.red;
+			temp_clusters[cluster_index].center.green += pixel.green;
+			temp_clusters[cluster_index].center.blue += pixel.blue;
+		}
+
+		/*Update cluster centers*/
+		for (int j = 0; j < num_colors; j++){
+			
+			int cluster_size = clusters[j].size; /*Getting the size of each cluster*/
+
+			/*Center update*/
+			clusters[j].center.red = temp_clusters[j].center.red / cluster_size;
+			clusters[j].center.green = temp_clusters[j].center.green / cluster_size;
+			clusters[j].center.blue = temp_clusters[j].center.blue / cluster_size;
+			
+		}
+		
+		cout << "Iteration " << iter + 1 << ": " << "SSE = " << sse << endl;
+
+	}
+}

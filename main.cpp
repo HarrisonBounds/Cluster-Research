@@ -582,89 +582,11 @@ free_table(const RGB_Table* table)
 	delete (table);
 }
 
-/*
-   For application of the batchk k-means algorithm to color quantization, see
-   M. E. Celebi, Improving the Performance of K-Means for Color Quantization,
-   Image and Vision Computing, vol. 29, no. 4, pp. 260-271, 2011.
- */
- /* Color quantization using the batch k-means algorithm */
-void 
-batch_kmeans(const RGB_Image* img, const int num_colors,
-	const int max_iters, RGB_Cluster* clusters)
-{
-	int num_pixels = img->size; /*Get the number of pixels in the image*/
-	int* assign = new int[num_pixels]; /*Array to store the assignment of each pixel to a cluster*/
-	double sse; /*Variable to store SSE*/
-	double delta_red, delta_green, delta_blue;
-	double dist;
-	RGB_Pixel pixel;
-	RGB_Cluster *temp_clusters;
 
-
-	temp_clusters = ( RGB_Cluster * ) malloc ( num_colors * sizeof ( RGB_Cluster ) );
-
-	/*Loop until the max number of iterations is hit : Terminate by iterations only*/
-	for (int iter = 0; iter < max_iters; iter++){
-		
-		sse = 0.0; /*Reset sse for next iteration*/
-
-		/*Reset the clusters for the next iteration*/
-		for (int j = 0; j < num_colors; j++){
-			temp_clusters[j].center.red = 0.0;
-			temp_clusters[j].center.green = 0.0;
-			temp_clusters[j].center.blue = 0.0;
-			temp_clusters[j].size = 0;
-			clusters[j].size = 0; 
-		}
-		/*Loop over all pixels and assign them to the nearest cluster*/
-		for(int i = 0; i < num_pixels; i++){
-			double min_dist = MAX_RGB_DIST; /*store the max distance in a variable*/
-			int cluster_index = 0;
-			pixel = img->data[i];
-			
-			/*Calculate the Euclidean distance between the current pixel and current cluster*/
-			for (int j = 0; j < num_colors; j++){
-				delta_red = pixel.red - clusters[j].center.red;
-				delta_green = pixel.green - clusters[j].center.green;
-				delta_blue = pixel.blue - clusters[j].center.blue;
-				dist = delta_red * delta_red + delta_green * delta_green + delta_blue * delta_blue;
-
-				/*Checking if this is the closest center*/
-				if (dist < min_dist){
-					min_dist = dist; /*Resetting min_dist*/
-					cluster_index = j; /*Assigning the closest pixel to a center*/
-				}
-			}
-			assign[i] = cluster_index; /*Store the assignment of the pixel to cluster in the array*/
-			clusters[cluster_index].size++; /*Increase size of cluster based on the assigned index*/
-			sse += min_dist; /*Accumulate the sse based on the euclidean distance of all pixels*/
-
-			/* Update the temporary center & size of the nearest cluster */
-			temp_clusters[cluster_index].center.red += pixel.red;
-			temp_clusters[cluster_index].center.green += pixel.green;
-			temp_clusters[cluster_index].center.blue += pixel.blue;
-		}
-
-		/*Update cluster centers*/
-		for (int j = 0; j < num_colors; j++){
-			
-			int cluster_size = clusters[j].size; /*Getting the size of each cluster*/
-
-			/*Center update*/
-			clusters[j].center.red = temp_clusters[j].center.red / cluster_size;
-			clusters[j].center.green = temp_clusters[j].center.green / cluster_size;
-			clusters[j].center.blue = temp_clusters[j].center.blue / cluster_size;
-			
-		}
-		
-		cout << "Iteration " << iter + 1 << ": " << "SSE = " << sse << endl;
-
-	}
-}
 
 /* Jancey Algorithm */
 void
-jancey(const RGB_Image* img, const int numColors, RGB_Cluster* clusters, int& numIters, const double alpha, const bool isBatch, double& mse)
+jkm(const RGB_Image* img, const int numColors, RGB_Cluster* clusters, int& numIters, const double alpha, const bool isBatch, double& mse)
 {
 	numIters = 0; /* initialize output variable */
 	mse = 0.0;
@@ -763,7 +685,7 @@ jancey(const RGB_Image* img, const int numColors, RGB_Cluster* clusters, int& nu
 
 /* Weighted Jancey algorithm */
 void
-weighted_jancey(const RGB_Table* colorTable, const int numColors, RGB_Cluster* clusters, int& numIters, const double alpha, const bool isBatch, double& mse)
+wjkm(const RGB_Table* colorTable, const int numColors, RGB_Cluster* clusters, int& numIters, const double alpha, const bool isBatch, double& mse)
 {
 	numIters = 0; /* initialize output variable */
 	mse = 0.0;
@@ -859,7 +781,7 @@ weighted_jancey(const RGB_Table* colorTable, const int numColors, RGB_Cluster* c
 
 /* Jancey accelerated using TIE (Triangle Equality Elimination) */
 void
-TIE_jancey(const RGB_Image* img, const int numColors, RGB_Cluster* clusters, int& numIters, const double alpha, const bool isBatch, double& mse)
+tjkm(const RGB_Image* img, const int numColors, RGB_Cluster* clusters, int& numIters, const double alpha, const bool isBatch, double& mse)
 {
 	numIters = 0;
 	mse = 0.0;
@@ -1019,7 +941,7 @@ TIE_jancey(const RGB_Image* img, const int numColors, RGB_Cluster* clusters, int
 }
 
 void
-weighted_TIE_jancey(const RGB_Table* colorTable, const int numColors, RGB_Cluster* clusters, int& numIters, const double alpha, const bool isBatch, double& mse)
+twjkm(const RGB_Table* colorTable, const int numColors, RGB_Cluster* clusters, int& numIters, const double alpha, const bool isBatch, double& mse)
 {
 	numIters = 0;
 	mse = 0.0;
@@ -1320,7 +1242,7 @@ main(int argc, char* argv[])
 				/*Start Timer*/
 				std::chrono::high_resolution_clock::time_point bkm_start = std::chrono::high_resolution_clock::now();
 
-				jancey(img, colors[j], cluster, numIters, alpha, true, mse); /*Running Batch K-Means Algorithm (isBatch == true)*/
+				jkm(img, colors[j], cluster, numIters, alpha, true, mse); /*Running Batch K-Means Algorithm (isBatch == true)*/
 
 				/* Stop Timer*/
 				std::chrono::high_resolution_clock::time_point bkm_stop = std::chrono::high_resolution_clock::now();
@@ -1335,7 +1257,7 @@ main(int argc, char* argv[])
 				/*Start Timer*/
 				std::chrono::high_resolution_clock::time_point twbkm_start = std::chrono::high_resolution_clock::now();
 
-				weighted_TIE_jancey(table, colors[j], cluster, numIters, alpha, true, mse); /*Running TIE + Weighted Batch K-Means Algorithm (isBatch == true)*/
+				twjkm(table, colors[j], cluster, numIters, alpha, true, mse); /*Running TIE + Weighted Batch K-Means Algorithm (isBatch == true)*/
 
 				/* Stop Timer*/
 				std::chrono::high_resolution_clock::time_point twbkm_stop = std::chrono::high_resolution_clock::now();
@@ -1374,7 +1296,7 @@ main(int argc, char* argv[])
 				/*Start Timer*/
 				std::chrono::high_resolution_clock::time_point jkm_start = std::chrono::high_resolution_clock::now();
 
-				jancey(img, colors[j], cluster, numIters, alpha, false, mse); /*Running Jancey K-Means Algorithm (isBatch == false)*/
+				jkm(img, colors[j], cluster, numIters, alpha, false, mse); /*Running Jancey K-Means Algorithm (isBatch == false)*/
 
 				/* Stop Timer*/
 				std::chrono::high_resolution_clock::time_point jkm_stop = std::chrono::high_resolution_clock::now();
@@ -1389,7 +1311,7 @@ main(int argc, char* argv[])
 				/*Start Timer*/
 				std::chrono::high_resolution_clock::time_point twjkm_start = std::chrono::high_resolution_clock::now();
 
-				weighted_TIE_jancey(table, colors[j], cluster, numIters, alpha, false, mse); /*Running TIE + Weighted Jancey K-Means Algorithm (isBatch == false)*/
+				twjkm(table, colors[j], cluster, numIters, alpha, false, mse); /*Running TIE + Weighted Jancey K-Means Algorithm (isBatch == false)*/
 
 				/* Stop Timer*/
 				std::chrono::high_resolution_clock::time_point twjkm_stop = std::chrono::high_resolution_clock::now();
@@ -1441,7 +1363,7 @@ main(int argc, char* argv[])
 				/*Start Timer*/
 				std::chrono::high_resolution_clock::time_point twbkm_start1 = std::chrono::high_resolution_clock::now();
 
-				weighted_TIE_jancey(table, colors[j], cluster, numIters, alpha, true, twbkm_mse);
+				twjkm(table, colors[j], cluster, numIters, alpha, true, twbkm_mse);
 
 				/* Stop Timer*/
 				std::chrono::high_resolution_clock::time_point twbkm_stop1 = std::chrono::high_resolution_clock::now();
@@ -1455,7 +1377,7 @@ main(int argc, char* argv[])
 				/*Start Timer*/
 				std::chrono::high_resolution_clock::time_point twjkm_start1 = std::chrono::high_resolution_clock::now();
 
-				weighted_TIE_jancey(table, colors[j], cluster, numIters, twjkm_alpha1, false, twjkm_mse1);
+				twjkm(table, colors[j], cluster, numIters, twjkm_alpha1, false, twjkm_mse1);
 
 				/* Stop Timer*/
 				std::chrono::high_resolution_clock::time_point twjkm_stop1 = std::chrono::high_resolution_clock::now();
@@ -1469,7 +1391,7 @@ main(int argc, char* argv[])
 				/*Start Timer*/
 				std::chrono::high_resolution_clock::time_point twjkm_start2 = std::chrono::high_resolution_clock::now();
 
-				weighted_TIE_jancey(table, colors[j], cluster, numIters, twjkm_alpha2, false, twjkm_mse2);
+				twjkm(table, colors[j], cluster, numIters, twjkm_alpha2, false, twjkm_mse2);
 
 				/* Stop Timer*/
 				std::chrono::high_resolution_clock::time_point twjkm_stop2 = std::chrono::high_resolution_clock::now();
@@ -1483,7 +1405,7 @@ main(int argc, char* argv[])
 				/*Start Timer*/
 				std::chrono::high_resolution_clock::time_point twjkm_start3 = std::chrono::high_resolution_clock::now();
 
-				weighted_TIE_jancey(table, colors[j], cluster, numIters, twjkm_alpha3, false, twjkm_mse3);
+				twjkm(table, colors[j], cluster, numIters, twjkm_alpha3, false, twjkm_mse3);
 
 				/* Stop Timer*/
 				std::chrono::high_resolution_clock::time_point twjkm_stop3 = std::chrono::high_resolution_clock::now();
@@ -1497,7 +1419,7 @@ main(int argc, char* argv[])
 				/*Start Timer*/
 				std::chrono::high_resolution_clock::time_point twjkm_start4 = std::chrono::high_resolution_clock::now();
 
-				weighted_TIE_jancey(table, colors[j], cluster, numIters, twjkm_alpha4, false, twjkm_mse4);
+				twjkm(table, colors[j], cluster, numIters, twjkm_alpha4, false, twjkm_mse4);
 
 				/* Stop Timer*/
 				std::chrono::high_resolution_clock::time_point twjkm_stop4 = std::chrono::high_resolution_clock::now();
@@ -1511,7 +1433,7 @@ main(int argc, char* argv[])
 				/*Start Timer*/
 				std::chrono::high_resolution_clock::time_point twjkm_start5 = std::chrono::high_resolution_clock::now();
 
-				weighted_TIE_jancey(table, colors[j], cluster, numIters, twjkm_alpha5, false, twjkm_mse5);
+				twjkm(table, colors[j], cluster, numIters, twjkm_alpha5, false, twjkm_mse5);
 
 				/* Stop Timer*/
 				std::chrono::high_resolution_clock::time_point twjkm_stop5 = std::chrono::high_resolution_clock::now();
