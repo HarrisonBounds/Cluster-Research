@@ -1172,15 +1172,6 @@ maximin(const RGB_Image* img, const int num_colors)
 	}
 
 
-void
-free_img(const RGB_Image* img) {
-	/* Free Image Data*/
-	free(img->data);
-
-	/* Free Image Pointer*/
-	delete(img);
-}
-
 int 
 main(int argc, char* argv[])
 {
@@ -1279,6 +1270,8 @@ main(int argc, char* argv[])
 			/*OUTPUT*/
 			cout << filenames[i] << ", " << colors[j] << ", "  << "BKM" << ", " << bkm_average_elapsed << ", " << "TWBKM" << ", " << twbkm_average_elapsed << endl;
 		}
+		free_image(img);
+		free_table(table);
 	}
 
 	/*OBJECTIVE 2 - How fast is TIE + Weighted Jancey K-Means compared to its vanilla counterpart (Jancey K-means)*/
@@ -1333,6 +1326,8 @@ main(int argc, char* argv[])
 			/*OUTPUT*/
 			cout << filenames[i] << ", " << colors[j] << ", "  << "JKM" << ", " << jkm_average_elapsed << ", " << "TWJKM" << ", " << twjkm_average_elapsed << endl;
 		}
+		free_image(img);
+		free_table(table);
 	}
 
 	/*===============================================================================================================================================================*/
@@ -1469,6 +1464,8 @@ main(int argc, char* argv[])
 			<< "TWJKM" << ", " << twjkm_alpha4 << ", " << twjkm_mse4 << ", " << twjkm_average_elapsed4 << ", "
 			<< "TWJKM" << ", " << twjkm_alpha5 << ", " << twjkm_mse5 << ", " << twjkm_average_elapsed5 << ", " << endl;
 		}
+		free_image(img);
+		free_table(table);
 	}
 
 	cout << "DONE" << endl;
