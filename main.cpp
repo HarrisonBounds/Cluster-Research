@@ -1185,32 +1185,16 @@ main(int argc, char* argv[])
 	int numIters;
 	double mse;
 	double twbkm_mse;
-	double twjkm_mse1;
-	double twjkm_mse2;
-	double twjkm_mse3;
-	double twjkm_mse4;
-	double twjkm_mse5;
-	double alpha12 = 1.2;
-	double alpha14 = 1.4; 
-	double alpha16 = 1.6; 
-	double alpha18 = 1.8; 
-	double alpha199 = 1.99; /*(Algorithm not guarnteed to converge at alpha = 2.0)*/
-	double bkm_average_elapsed;
-	double jkm_average_elapsed;
-	double twbkm_average_elapsed;
-	double twbkm_average_elapsed1; 
-	double twjkm_average_elapsed;
-	double twjkm_average_elapsed1;
-	double twjkm_average_elapsed2;
-	double twjkm_average_elapsed3;
-	double twjkm_average_elapsed4;
-	double twjkm_average_elapsed5;
+	double twjkm_mse1, twjkm_mse2, twjkm_mse3, twjkm_mse4, twjkm_mse5;
+	double alpha12 = 1.2, alpha14 = 1.4, alpha16 = 1.6, alpha18 = 1.8, alpha199 = 1.99; /*(Algorithm not guarnteed to converge at alpha = 2.0)*/
+	double bkm_average_elapsed, jkm_average_elasped;
+	double twbkm_average_elapsed, twbkm_average_elapsed1;
+	double twjkm_average_elapsed, twjkm_average_elapsed1, twjkm_average_elapsed2, twjkm_average_elapsed3, twjkm_average_elapsed4, twjkm_average_elapsed5;
 
 	RGB_Image* img;
 	RGB_Image* out_img;
 	RGB_Cluster* cluster;
 	RGB_Table* table; 
-
 
 	srand(time(NULL));
 
