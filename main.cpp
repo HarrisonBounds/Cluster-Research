@@ -1177,7 +1177,7 @@ main(int argc, char* argv[])
 {
 	const int numColors = 4;
 	const int numImages = 2;
-	const int repetitions = 10;
+	const int numReps = 10;
 	const double alpha = 1.8;
 	char* filename;						/* Filename Pointer*/
 	int colors[numColors] = {4, 16, 64, 256}; /* Number of clusters*/
@@ -1185,11 +1185,11 @@ main(int argc, char* argv[])
 	int numIters;
 	double mse;
 	double twbkm_mse;
-	double twjkm_mse1, twjkm_mse2, twjkm_mse3, twjkm_mse4, twjkm_mse5;
+	double twjkm_mse_alpha12, twjkm_mse_alpha14, twjkm_mse_alpha16, twjkm_mse_alpha18, twjkm_mse_alpha199;
 	double alpha12 = 1.2, alpha14 = 1.4, alpha16 = 1.6, alpha18 = 1.8, alpha199 = 1.99; /*(Algorithm not guarnteed to converge at alpha = 2.0)*/
-	double bkm_average_elapsed, jkm_average_elasped;
+	double bkm_avg_time, jkm_avg_time;
 	double twbkm_average_elapsed, twbkm_average_elapsed1;
-	double twjkm_average_elapsed, twjkm_average_elapsed1, twjkm_average_elapsed2, twjkm_average_elapsed3, twjkm_average_elapsed4, twjkm_average_elapsed5;
+	double twjkm_average_elapsed, twjkm_avg_time_alpha12, twjkm_avg_time_alpha14, twjkm_avg_time_alpha16, twjkm_avg_time_alpha18, twjkm_avg_time_alpha199;
 
 	RGB_Image* img;
 	RGB_Image* out_img;
@@ -1212,9 +1212,9 @@ main(int argc, char* argv[])
 		for (int j = 0; j < numColors; j++)
 		{
 			cluster = maximin(img, colors[j]);
-			bkm_average_elapsed = 0.0;
+			bkm_avg_time = 0.0;
 			twbkm_average_elapsed = 0.0;
-			for (int k = 0; k < repetitions; k++)
+			for (int k = 0; k < numReps; k++)
 			{
 				/*BKM Algorithm*/
 				/*Start Timer*/
@@ -1244,15 +1244,15 @@ main(int argc, char* argv[])
 				milliseconds twbkm_elapsed = duration_cast<milliseconds>(twbkm_stop - twbkm_start);
 
 				/*Average cpu times*/
-				bkm_average_elapsed += bkm_elapsed.count();
+				bkm_avg_time += bkm_elapsed.count();
 				twbkm_average_elapsed += twbkm_elapsed.count();
 			}
 			/*Getting Average Run Times*/
-			bkm_average_elapsed = bkm_average_elapsed / repetitions;
-			twbkm_average_elapsed = twbkm_average_elapsed / repetitions;
+			bkm_avg_time = bkm_avg_time / numReps;
+			twbkm_average_elapsed = twbkm_average_elapsed / numReps;
 
 			/*OUTPUT*/
-			cout << filenames[i] << ", " << colors[j] << ", "  << "BKM" << ", " << bkm_average_elapsed << ", " << "TWBKM" << ", " << twbkm_average_elapsed << endl;
+			cout << filenames[i] << ", " << colors[j] << ", "  << "BKM" << ", " << bkm_avg_time << ", " << "TWBKM" << ", " << twbkm_average_elapsed << endl;
 		}
 		free_image(img);
 		free_table(table);
@@ -1268,9 +1268,9 @@ main(int argc, char* argv[])
 		for (int j = 0; j < numColors; j++)
 		{
 			cluster = maximin(img, colors[j]);
-			jkm_average_elapsed = 0.0;
+			jkm_avg_time = 0.0;
 			twjkm_average_elapsed = 0.0;
-			for (int k = 0; k < repetitions; k++)
+			for (int k = 0; k < numReps; k++)
 			{
 				/*JKM Algorithm*/
 				/*Start Timer*/
@@ -1300,15 +1300,15 @@ main(int argc, char* argv[])
 				milliseconds twjkm_elapsed = duration_cast<milliseconds>(twjkm_stop - twjkm_start);
 
 				/*Average cpu times*/
-				jkm_average_elapsed += jkm_elapsed.count();
+				jkm_avg_time += jkm_elapsed.count();
 				twjkm_average_elapsed += twjkm_elapsed.count();
 			}
 			/*Getting Average Run Times*/
-			jkm_average_elapsed = jkm_average_elapsed / repetitions;
-			twjkm_average_elapsed = twjkm_average_elapsed / repetitions;
+			jkm_avg_time = jkm_avg_time / numReps;
+			twjkm_average_elapsed = twjkm_average_elapsed / numReps;
 
 			/*OUTPUT*/
-			cout << filenames[i] << ", " << colors[j] << ", "  << "JKM" << ", " << jkm_average_elapsed << ", " << "TWJKM" << ", " << twjkm_average_elapsed << endl;
+			cout << filenames[i] << ", " << colors[j] << ", "  << "JKM" << ", " << jkm_avg_time << ", " << "TWJKM" << ", " << twjkm_average_elapsed << endl;
 		}
 		free_image(img);
 		free_table(table);
@@ -1332,13 +1332,13 @@ main(int argc, char* argv[])
 		{
 			cluster = maximin(img, colors[j]);
 			twbkm_average_elapsed1 = 0.0;
-			twjkm_average_elapsed1 = 0.0;
-			twjkm_average_elapsed2 = 0.0;
-			twjkm_average_elapsed3 = 0.0;
-			twjkm_average_elapsed4 = 0.0;
-			twjkm_average_elapsed5 = 0.0;
+			twjkm_avg_time_alpha12 = 0.0;
+			twjkm_avg_time_alpha14 = 0.0;
+			twjkm_avg_time_alpha16 = 0.0;
+			twjkm_avg_time_alpha18 = 0.0;
+			twjkm_avg_time_alpha199 = 0.0;
 			
-			for (int k = 0; k < repetitions; k++)
+			for (int k = 0; k < numReps; k++)
 			{
 				/*TWBKM*/
 
@@ -1359,7 +1359,7 @@ main(int argc, char* argv[])
 				/*Start Timer*/
 				high_resolution_clock::time_point twjkm_start1 = high_resolution_clock::now();
 
-				twjkm(table, colors[j], cluster, numIters, alpha12, false, twjkm_mse1);
+				twjkm(table, colors[j], cluster, numIters, alpha12, false, twjkm_mse_alpha12);
 
 				/* Stop Timer*/
 				high_resolution_clock::time_point twjkm_stop1 = high_resolution_clock::now();
@@ -1373,7 +1373,7 @@ main(int argc, char* argv[])
 				/*Start Timer*/
 				high_resolution_clock::time_point twjkm_start2 = high_resolution_clock::now();
 
-				twjkm(table, colors[j], cluster, numIters, alpha14, false, twjkm_mse2);
+				twjkm(table, colors[j], cluster, numIters, alpha14, false, twjkm_mse_alpha14);
 
 				/* Stop Timer*/
 				high_resolution_clock::time_point twjkm_stop2 = high_resolution_clock::now();
@@ -1387,7 +1387,7 @@ main(int argc, char* argv[])
 				/*Start Timer*/
 				high_resolution_clock::time_point twjkm_start3 = high_resolution_clock::now();
 
-				twjkm(table, colors[j], cluster, numIters, alpha16, false, twjkm_mse3);
+				twjkm(table, colors[j], cluster, numIters, alpha16, false, twjkm_mse_alpha16);
 
 				/* Stop Timer*/
 				high_resolution_clock::time_point twjkm_stop3 = high_resolution_clock::now();
@@ -1401,7 +1401,7 @@ main(int argc, char* argv[])
 				/*Start Timer*/
 				high_resolution_clock::time_point twjkm_start4 = high_resolution_clock::now();
 
-				twjkm(table, colors[j], cluster, numIters, alpha18, false, twjkm_mse4);
+				twjkm(table, colors[j], cluster, numIters, alpha18, false, twjkm_mse_alpha18);
 
 				/* Stop Timer*/
 				high_resolution_clock::time_point twjkm_stop4 = high_resolution_clock::now();
@@ -1415,7 +1415,7 @@ main(int argc, char* argv[])
 				/*Start Timer*/
 				high_resolution_clock::time_point twjkm_start5 = high_resolution_clock::now();
 
-				twjkm(table, colors[j], cluster, numIters, alpha199, false, twjkm_mse5);
+				twjkm(table, colors[j], cluster, numIters, alpha199, false, twjkm_mse_alpha199);
 
 				/* Stop Timer*/
 				high_resolution_clock::time_point twjkm_stop5 = high_resolution_clock::now();
@@ -1425,28 +1425,28 @@ main(int argc, char* argv[])
 
 
 				twbkm_average_elapsed1 += twbkm_elapsed1.count();
-				twjkm_average_elapsed1 += twjkm_elapsed1.count();
-				twjkm_average_elapsed2 += twjkm_elapsed2.count();
-				twjkm_average_elapsed3 += twjkm_elapsed3.count();
-				twjkm_average_elapsed4 += twjkm_elapsed4.count();
-				twjkm_average_elapsed5 += twjkm_elapsed5.count();
+				twjkm_avg_time_alpha12 += twjkm_elapsed1.count();
+				twjkm_avg_time_alpha14 += twjkm_elapsed2.count();
+				twjkm_avg_time_alpha16 += twjkm_elapsed3.count();
+				twjkm_avg_time_alpha18 += twjkm_elapsed4.count();
+				twjkm_avg_time_alpha199 += twjkm_elapsed5.count();
 			}
 
 			/*Getting Average Run Times*/
-			twbkm_average_elapsed1 = twbkm_average_elapsed1 / repetitions;
-			twjkm_average_elapsed1 = twjkm_average_elapsed1 / repetitions;
-			twjkm_average_elapsed2 = twjkm_average_elapsed2 / repetitions;
-			twjkm_average_elapsed3 = twjkm_average_elapsed3 / repetitions;
-			twjkm_average_elapsed4 = twjkm_average_elapsed4 / repetitions;
-			twjkm_average_elapsed5 = twjkm_average_elapsed5 / repetitions;
+			twbkm_average_elapsed1 = twbkm_average_elapsed1 / numReps;
+			twjkm_avg_time_alpha12 = twjkm_avg_time_alpha12 / numReps;
+			twjkm_avg_time_alpha14 = twjkm_avg_time_alpha14 / numReps;
+			twjkm_avg_time_alpha16 = twjkm_avg_time_alpha16 / numReps;
+			twjkm_avg_time_alpha18 = twjkm_avg_time_alpha18 / numReps;
+			twjkm_avg_time_alpha199 = twjkm_avg_time_alpha199 / numReps;
 
 			/*OUTPUT*/
 			cout << filenames[i] << ", " << colors[j] << ", " << "TWBKM" << ", " << twbkm_average_elapsed1 << ", " << twbkm_mse << ", "
-			<< "TWJKM" << ", " << alpha12 << ", " << twjkm_mse1 << ", " << twjkm_average_elapsed1 << ", "
-			<< "TWJKM" << ", " << alpha14 << ", " << twjkm_mse2 << ", " << twjkm_average_elapsed2 << ", "
-			<< "TWJKM" << ", " << alpha16 << ", " << twjkm_mse3 << ", " << twjkm_average_elapsed3 << ", "
-			<< "TWJKM" << ", " << alpha18 << ", " << twjkm_mse4 << ", " << twjkm_average_elapsed4 << ", "
-			<< "TWJKM" << ", " << alpha199 << ", " << twjkm_mse5 << ", " << twjkm_average_elapsed5 << ", " << endl;
+			<< "TWJKM" << ", " << alpha12 << ", " << twjkm_mse_alpha12 << ", " << twjkm_avg_time_alpha12 << ", "
+			<< "TWJKM" << ", " << alpha14 << ", " << twjkm_mse_alpha14 << ", " << twjkm_avg_time_alpha14 << ", "
+			<< "TWJKM" << ", " << alpha16 << ", " << twjkm_mse_alpha16 << ", " << twjkm_avg_time_alpha16 << ", "
+			<< "TWJKM" << ", " << alpha18 << ", " << twjkm_mse_alpha18 << ", " << twjkm_avg_time_alpha18 << ", "
+			<< "TWJKM" << ", " << alpha199 << ", " << twjkm_mse_alpha199 << ", " << twjkm_avg_time_alpha199 << ", " << endl;
 		}
 		free_image(img);
 		free_table(table);
