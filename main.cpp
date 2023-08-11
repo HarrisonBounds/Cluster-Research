@@ -1188,7 +1188,7 @@ main(int argc, char* argv[])
 	double twjkm_mse_alpha12, twjkm_mse_alpha14, twjkm_mse_alpha16, twjkm_mse_alpha18, twjkm_mse_alpha199;
 	double alpha12 = 1.2, alpha14 = 1.4, alpha16 = 1.6, alpha18 = 1.8, alpha199 = 1.99; /*(Algorithm not guarnteed to converge at alpha = 2.0)*/
 	double bkm_avg_time, jkm_avg_time;
-	double twbkm_average_elapsed, twbkm_average_elapsed1;
+	double twbkm_average_time, twbkm_average_time1;
 	double twjkm_average_elapsed, twjkm_avg_time_alpha12, twjkm_avg_time_alpha14, twjkm_avg_time_alpha16, twjkm_avg_time_alpha18, twjkm_avg_time_alpha199;
 
 	RGB_Image* img;
@@ -1218,41 +1218,41 @@ main(int argc, char* argv[])
 			{
 				/*BKM Algorithm*/
 				/*Start Timer*/
-				high_resolution_clock::time_point bkm_start = high_resolution_clock::now();
+				high_resolution_clock::time_point start = high_resolution_clock::now();
 
 				jkm(img, colors[j], cluster, numIters, alpha, true, mse); /*Running Batch K-Means Algorithm (isBatch == true)*/
 
 				/* Stop Timer*/
-				high_resolution_clock::time_point bkm_stop = high_resolution_clock::now();
+				high_resolution_clock::time_point stop = high_resolution_clock::now();
 
 				/* Execution Time*/
-				milliseconds bkm_elapsed = duration_cast<milliseconds>(bkm_stop - bkm_start);
+				milliseconds bkm_time = duration_cast<milliseconds>(stop - start);
 
 				/*======================================================================================================================*/
 
 				/*TWBKM Algorithm*/
 
 				/*Start Timer*/
-				high_resolution_clock::time_point twbkm_start = high_resolution_clock::now();
+				high_resolution_clock::time_point start = high_resolution_clock::now();
 
 				twjkm(table, colors[j], cluster, numIters, alpha, true, mse); /*Running TIE + Weighted Batch K-Means Algorithm (isBatch == true)*/
 
 				/* Stop Timer*/
-				high_resolution_clock::time_point twbkm_stop = high_resolution_clock::now();
+				high_resolution_clock::time_point stop = high_resolution_clock::now();
 
 				/* Execution Time*/
-				milliseconds twbkm_elapsed = duration_cast<milliseconds>(twbkm_stop - twbkm_start);
+				milliseconds twbkm_time = duration_cast<milliseconds>(stop - start);
 
 				/*Average cpu times*/
-				bkm_avg_time += bkm_elapsed.count();
-				twbkm_average_elapsed += twbkm_elapsed.count();
+				bkm_avg_time += bkm_time.count();
+				twbkm_average_elapsed += twbkm_time.count();
 			}
 			/*Getting Average Run Times*/
 			bkm_avg_time = bkm_avg_time / numReps;
-			twbkm_average_elapsed = twbkm_average_elapsed / numReps;
+			twbkm_average_time = twbkm_average_time / numReps;
 
 			/*OUTPUT*/
-			cout << filenames[i] << ", " << colors[j] << ", "  << "BKM" << ", " << bkm_avg_time << ", " << "TWBKM" << ", " << twbkm_average_elapsed << endl;
+			cout << filenames[i] << ", " << colors[j] << ", "  << "BKM" << ", " << bkm_avg_time << ", " << "TWBKM" << ", " << twbkm_average_time << endl;
 		}
 		free_image(img);
 		free_table(table);
@@ -1269,46 +1269,46 @@ main(int argc, char* argv[])
 		{
 			cluster = maximin(img, colors[j]);
 			jkm_avg_time = 0.0;
-			twjkm_average_elapsed = 0.0;
+			twjkm_average_time = 0.0;
 			for (int k = 0; k < numReps; k++)
 			{
 				/*JKM Algorithm*/
 				/*Start Timer*/
-				high_resolution_clock::time_point jkm_start = high_resolution_clock::now();
+				high_resolution_clock::time_point start = high_resolution_clock::now();
 
 				jkm(img, colors[j], cluster, numIters, alpha, false, mse); /*Running Jancey K-Means Algorithm (isBatch == false)*/
 
 				/* Stop Timer*/
-				high_resolution_clock::time_point jkm_stop = high_resolution_clock::now();
+				high_resolution_clock::time_point stop = high_resolution_clock::now();
 
 				/* Execution Time*/
-				milliseconds jkm_elapsed = duration_cast<milliseconds>(jkm_stop - jkm_start);
+				milliseconds jkm_time = duration_cast<milliseconds>(stop - start);
 
 				/*======================================================================================================================*/
 
 				/*TWJKM Algorithm*/
 
 				/*Start Timer*/
-				high_resolution_clock::time_point twjkm_start = high_resolution_clock::now();
+				high_resolution_clock::time_point start = high_resolution_clock::now();
 
 				twjkm(table, colors[j], cluster, numIters, alpha, false, mse); /*Running TIE + Weighted Jancey K-Means Algorithm (isBatch == false)*/
 
 				/* Stop Timer*/
-				high_resolution_clock::time_point twjkm_stop = high_resolution_clock::now();
+				high_resolution_clock::time_point stop = high_resolution_clock::now();
 
 				/* Execution Time*/
-				milliseconds twjkm_elapsed = duration_cast<milliseconds>(twjkm_stop - twjkm_start);
+				milliseconds twjkm_time = duration_cast<milliseconds>(stop - start);
 
 				/*Average cpu times*/
-				jkm_avg_time += jkm_elapsed.count();
-				twjkm_average_elapsed += twjkm_elapsed.count();
+				jkm_avg_time += jkm_time.count();
+				twjkm_average_time += twjkm_time.count();
 			}
 			/*Getting Average Run Times*/
 			jkm_avg_time = jkm_avg_time / numReps;
-			twjkm_average_elapsed = twjkm_average_elapsed / numReps;
+			twjkm_average_time = twjkm_average_time / numReps;
 
 			/*OUTPUT*/
-			cout << filenames[i] << ", " << colors[j] << ", "  << "JKM" << ", " << jkm_avg_time << ", " << "TWJKM" << ", " << twjkm_average_elapsed << endl;
+			cout << filenames[i] << ", " << colors[j] << ", "  << "JKM" << ", " << jkm_avg_time << ", " << "TWJKM" << ", " << twjkm_average_time << endl;
 		}
 		free_image(img);
 		free_table(table);
@@ -1331,7 +1331,7 @@ main(int argc, char* argv[])
 		for (int j = 0; j < numColors; j++)
 		{
 			cluster = maximin(img, colors[j]);
-			twbkm_average_elapsed1 = 0.0;
+			twbkm_average_time1 = 0.0;
 			twjkm_avg_time_alpha12 = 0.0;
 			twjkm_avg_time_alpha14 = 0.0;
 			twjkm_avg_time_alpha16 = 0.0;
@@ -1343,97 +1343,97 @@ main(int argc, char* argv[])
 				/*TWBKM*/
 
 				/*Start Timer*/
-				high_resolution_clock::time_point twbkm_start1 = high_resolution_clock::now();
+				high_resolution_clock::time_point start = high_resolution_clock::now();
 
 				twjkm(table, colors[j], cluster, numIters, alpha, true, twbkm_mse);
 
 				/* Stop Timer*/
-				high_resolution_clock::time_point twbkm_stop1 = high_resolution_clock::now();
+				high_resolution_clock::time_point stop = high_resolution_clock::now();
 
 				/* Execution Time*/
-				milliseconds twbkm_elapsed1 = duration_cast<milliseconds>(twbkm_stop1 - twbkm_start1);
+				milliseconds twbkm_time1 = duration_cast<milliseconds>(stop - start);
 
 				/*============================================================================================================================*/
 
 				/*TWJKM alpha = 1.2*/
 				/*Start Timer*/
-				high_resolution_clock::time_point twjkm_start1 = high_resolution_clock::now();
+				high_resolution_clock::time_point start = high_resolution_clock::now();
 
 				twjkm(table, colors[j], cluster, numIters, alpha12, false, twjkm_mse_alpha12);
 
 				/* Stop Timer*/
-				high_resolution_clock::time_point twjkm_stop1 = high_resolution_clock::now();
+				high_resolution_clock::time_point stop = high_resolution_clock::now();
 
 				/* Execution Time*/
-				milliseconds twjkm_elapsed1 = duration_cast<milliseconds>(twjkm_stop1 - twjkm_start1);
+				milliseconds twjkm_time1 = duration_cast<milliseconds>(stop - start);
 
 				/*============================================================================================================================*/
 
 				/*TWJKM alpha = 1.4*/
 				/*Start Timer*/
-				high_resolution_clock::time_point twjkm_start2 = high_resolution_clock::now();
+				high_resolution_clock::time_point start = high_resolution_clock::now();
 
 				twjkm(table, colors[j], cluster, numIters, alpha14, false, twjkm_mse_alpha14);
 
 				/* Stop Timer*/
-				high_resolution_clock::time_point twjkm_stop2 = high_resolution_clock::now();
+				high_resolution_clock::time_point stop = high_resolution_clock::now();
 
 				/* Execution Time*/
-				milliseconds twjkm_elapsed2 = duration_cast<milliseconds>(twjkm_stop2 - twjkm_start2);
+				milliseconds twjkm_time2 = duration_cast<milliseconds>(stop - start);
 
 				/*============================================================================================================================*/
 
 				/*TWJKM alpha = 1.6*/
 				/*Start Timer*/
-				high_resolution_clock::time_point twjkm_start3 = high_resolution_clock::now();
+				high_resolution_clock::time_point start = high_resolution_clock::now();
 
 				twjkm(table, colors[j], cluster, numIters, alpha16, false, twjkm_mse_alpha16);
 
 				/* Stop Timer*/
-				high_resolution_clock::time_point twjkm_stop3 = high_resolution_clock::now();
+				high_resolution_clock::time_point stop = high_resolution_clock::now();
 
 				/* Execution Time*/
-				milliseconds twjkm_elapsed3 = duration_cast<milliseconds>(twjkm_stop3 - twjkm_start3);
+				milliseconds twjkm_time3 = duration_cast<milliseconds>(stop - start);
 
 				/*============================================================================================================================*/
 
 				/*TWJKM alpha = 1.8*/
 				/*Start Timer*/
-				high_resolution_clock::time_point twjkm_start4 = high_resolution_clock::now();
+				high_resolution_clock::time_point start = high_resolution_clock::now();
 
 				twjkm(table, colors[j], cluster, numIters, alpha18, false, twjkm_mse_alpha18);
 
 				/* Stop Timer*/
-				high_resolution_clock::time_point twjkm_stop4 = high_resolution_clock::now();
+				high_resolution_clock::time_point stop = high_resolution_clock::now();
 
 				/* Execution Time*/
-				milliseconds twjkm_elapsed4 = duration_cast<milliseconds>(twjkm_stop4 - twjkm_start4);
+				milliseconds twjkm_time4 = duration_cast<milliseconds>(stop - start);
 
 				/*============================================================================================================================*/
 
 				/*TWJKM alpha = 1.99 (algorithm is NOT guarnteed to converge for alpha = 2.0)*/
 				/*Start Timer*/
-				high_resolution_clock::time_point twjkm_start5 = high_resolution_clock::now();
+				high_resolution_clock::time_point start = high_resolution_clock::now();
 
 				twjkm(table, colors[j], cluster, numIters, alpha199, false, twjkm_mse_alpha199);
 
 				/* Stop Timer*/
-				high_resolution_clock::time_point twjkm_stop5 = high_resolution_clock::now();
+				high_resolution_clock::time_point stop = high_resolution_clock::now();
 
 				/* Execution Time*/
-				milliseconds twjkm_elapsed5 = duration_cast<milliseconds>(twjkm_stop5 - twjkm_start5);
+				milliseconds twjkm_time5 = duration_cast<milliseconds>(stop - start);
 
 
-				twbkm_average_elapsed1 += twbkm_elapsed1.count();
-				twjkm_avg_time_alpha12 += twjkm_elapsed1.count();
-				twjkm_avg_time_alpha14 += twjkm_elapsed2.count();
-				twjkm_avg_time_alpha16 += twjkm_elapsed3.count();
-				twjkm_avg_time_alpha18 += twjkm_elapsed4.count();
-				twjkm_avg_time_alpha199 += twjkm_elapsed5.count();
+				twbkm_average_time1 += twbkm_time1.count();
+				twjkm_avg_time_alpha12 += twjkm_time1.count();
+				twjkm_avg_time_alpha14 += twjkm_time2.count();
+				twjkm_avg_time_alpha16 += twjkm_time3.count();
+				twjkm_avg_time_alpha18 += twjkm_time4.count();
+				twjkm_avg_time_alpha199 += twjkm_time5.count();
 			}
 
 			/*Getting Average Run Times*/
-			twbkm_average_elapsed1 = twbkm_average_elapsed1 / numReps;
+			twbkm_average_time1 = twbkm_average_time1 / numReps;
 			twjkm_avg_time_alpha12 = twjkm_avg_time_alpha12 / numReps;
 			twjkm_avg_time_alpha14 = twjkm_avg_time_alpha14 / numReps;
 			twjkm_avg_time_alpha16 = twjkm_avg_time_alpha16 / numReps;
@@ -1441,7 +1441,7 @@ main(int argc, char* argv[])
 			twjkm_avg_time_alpha199 = twjkm_avg_time_alpha199 / numReps;
 
 			/*OUTPUT*/
-			cout << filenames[i] << ", " << colors[j] << ", " << "TWBKM" << ", " << twbkm_average_elapsed1 << ", " << twbkm_mse << ", "
+			cout << filenames[i] << ", " << colors[j] << ", " << "TWBKM" << ", " << twbkm_average_time1 << ", " << twbkm_mse << ", "
 			<< "TWJKM" << ", " << alpha12 << ", " << twjkm_mse_alpha12 << ", " << twjkm_avg_time_alpha12 << ", "
 			<< "TWJKM" << ", " << alpha14 << ", " << twjkm_mse_alpha14 << ", " << twjkm_avg_time_alpha14 << ", "
 			<< "TWJKM" << ", " << alpha16 << ", " << twjkm_mse_alpha16 << ", " << twjkm_avg_time_alpha16 << ", "
