@@ -1188,8 +1188,8 @@ main(int argc, char* argv[])
 	double twjkm_mse_alpha12, twjkm_mse_alpha14, twjkm_mse_alpha16, twjkm_mse_alpha18, twjkm_mse_alpha199;
 	double alpha12 = 1.2, alpha14 = 1.4, alpha16 = 1.6, alpha18 = 1.8, alpha199 = 1.99; /*(Algorithm not guarnteed to converge at alpha = 2.0)*/
 	double bkm_avg_time, jkm_avg_time;
-	double twbkm_average_time, twbkm_average_time1;
-	double twjkm_average_elapsed, twjkm_avg_time_alpha12, twjkm_avg_time_alpha14, twjkm_avg_time_alpha16, twjkm_avg_time_alpha18, twjkm_avg_time_alpha199;
+	double twbkm_avg_time, twbkm_avg_time1;
+	double twjkm_avg_time, twjkm_avg_time_alpha12, twjkm_avg_time_alpha14, twjkm_avg_time_alpha16, twjkm_avg_time_alpha18, twjkm_avg_time_alpha199;
 
 	RGB_Image* img;
 	RGB_Image* out_img;
@@ -1213,7 +1213,7 @@ main(int argc, char* argv[])
 		{
 			cluster = maximin(img, colors[j]);
 			bkm_avg_time = 0.0;
-			twbkm_average_elapsed = 0.0;
+			twbkm_avg_time = 0.0;
 			for (int k = 0; k < numReps; k++)
 			{
 				/*BKM Algorithm*/
@@ -1245,14 +1245,14 @@ main(int argc, char* argv[])
 
 				/*Average cpu times*/
 				bkm_avg_time += bkm_time.count();
-				twbkm_average_elapsed += twbkm_time.count();
+				twbkm_avg_time += twbkm_time.count();
 			}
 			/*Getting Average Run Times*/
 			bkm_avg_time = bkm_avg_time / numReps;
-			twbkm_average_time = twbkm_average_time / numReps;
+			twbkm_avg_time = twbkm_avg_time / numReps;
 
 			/*OUTPUT*/
-			cout << filenames[i] << ", " << colors[j] << ", "  << "BKM" << ", " << bkm_avg_time << ", " << "TWBKM" << ", " << twbkm_average_time << endl;
+			cout << filenames[i] << ", " << colors[j] << ", "  << "BKM" << ", " << bkm_avg_time << ", " << "TWBKM" << ", " << twbkm_avg_time << endl;
 		}
 		free_image(img);
 		free_table(table);
@@ -1269,7 +1269,7 @@ main(int argc, char* argv[])
 		{
 			cluster = maximin(img, colors[j]);
 			jkm_avg_time = 0.0;
-			twjkm_average_time = 0.0;
+			twjkm_avg_time = 0.0;
 			for (int k = 0; k < numReps; k++)
 			{
 				/*JKM Algorithm*/
@@ -1301,14 +1301,14 @@ main(int argc, char* argv[])
 
 				/*Average cpu times*/
 				jkm_avg_time += jkm_time.count();
-				twjkm_average_time += twjkm_time.count();
+				twjkm_avg_time += twjkm_time.count();
 			}
 			/*Getting Average Run Times*/
 			jkm_avg_time = jkm_avg_time / numReps;
-			twjkm_average_time = twjkm_average_time / numReps;
+			twjkm_avg_time = twjkm_avg_time / numReps;
 
 			/*OUTPUT*/
-			cout << filenames[i] << ", " << colors[j] << ", "  << "JKM" << ", " << jkm_avg_time << ", " << "TWJKM" << ", " << twjkm_average_time << endl;
+			cout << filenames[i] << ", " << colors[j] << ", "  << "JKM" << ", " << jkm_avg_time << ", " << "TWJKM" << ", " << twjkm_avg_time << endl;
 		}
 		free_image(img);
 		free_table(table);
@@ -1331,7 +1331,7 @@ main(int argc, char* argv[])
 		for (int j = 0; j < numColors; j++)
 		{
 			cluster = maximin(img, colors[j]);
-			twbkm_average_time1 = 0.0;
+			twbkm_avg_time1 = 0.0;
 			twjkm_avg_time_alpha12 = 0.0;
 			twjkm_avg_time_alpha14 = 0.0;
 			twjkm_avg_time_alpha16 = 0.0;
@@ -1424,7 +1424,7 @@ main(int argc, char* argv[])
 				milliseconds twjkm_time5 = duration_cast<milliseconds>(stop - start);
 
 
-				twbkm_average_time1 += twbkm_time1.count();
+				twbkm_avg_time1 += twbkm_time1.count();
 				twjkm_avg_time_alpha12 += twjkm_time1.count();
 				twjkm_avg_time_alpha14 += twjkm_time2.count();
 				twjkm_avg_time_alpha16 += twjkm_time3.count();
@@ -1433,7 +1433,7 @@ main(int argc, char* argv[])
 			}
 
 			/*Getting Average Run Times*/
-			twbkm_average_time1 = twbkm_average_time1 / numReps;
+			twbkm_avg_time1 = twbkm_avg_time1 / numReps;
 			twjkm_avg_time_alpha12 = twjkm_avg_time_alpha12 / numReps;
 			twjkm_avg_time_alpha14 = twjkm_avg_time_alpha14 / numReps;
 			twjkm_avg_time_alpha16 = twjkm_avg_time_alpha16 / numReps;
@@ -1441,7 +1441,7 @@ main(int argc, char* argv[])
 			twjkm_avg_time_alpha199 = twjkm_avg_time_alpha199 / numReps;
 
 			/*OUTPUT*/
-			cout << filenames[i] << ", " << colors[j] << ", " << "TWBKM" << ", " << twbkm_average_time1 << ", " << twbkm_mse << ", "
+			cout << filenames[i] << ", " << colors[j] << ", " << "TWBKM" << ", " << twbkm_avg_time1 << ", " << twbkm_mse << ", "
 			<< "TWJKM" << ", " << alpha12 << ", " << twjkm_mse_alpha12 << ", " << twjkm_avg_time_alpha12 << ", "
 			<< "TWJKM" << ", " << alpha14 << ", " << twjkm_mse_alpha14 << ", " << twjkm_avg_time_alpha14 << ", "
 			<< "TWJKM" << ", " << alpha16 << ", " << twjkm_mse_alpha16 << ", " << twjkm_avg_time_alpha16 << ", "
