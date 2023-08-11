@@ -11,8 +11,10 @@
 #include <float.h>
 #include <array>
 #include <vector>
+#include <iomanip>
 
 using namespace std;
+using namespace std::chrono;
 
 typedef unsigned char uchar;
 typedef unsigned long ulong;
@@ -1165,6 +1167,7 @@ maximin(const RGB_Image* img, const int num_colors)
 				cluster[j].center = img->data[next_cluster];
 				cluster[j].size = 0; /*Reset cluster size to choose next center*/
 		}
+				free(d);
 				return cluster;
 	}
 
@@ -1240,30 +1243,30 @@ main(int argc, char* argv[])
 			{
 				/*BKM Algorithm*/
 				/*Start Timer*/
-				std::chrono::high_resolution_clock::time_point bkm_start = std::chrono::high_resolution_clock::now();
+				high_resolution_clock::time_point bkm_start = high_resolution_clock::now();
 
 				jkm(img, colors[j], cluster, numIters, alpha, true, mse); /*Running Batch K-Means Algorithm (isBatch == true)*/
 
 				/* Stop Timer*/
-				std::chrono::high_resolution_clock::time_point bkm_stop = std::chrono::high_resolution_clock::now();
+				high_resolution_clock::time_point bkm_stop = high_resolution_clock::now();
 
 				/* Execution Time*/
-				std::chrono::milliseconds bkm_elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(bkm_stop - bkm_start);
+				milliseconds bkm_elapsed = duration_cast<milliseconds>(bkm_stop - bkm_start);
 
 				/*======================================================================================================================*/
 
 				/*TWBKM Algorithm*/
 
 				/*Start Timer*/
-				std::chrono::high_resolution_clock::time_point twbkm_start = std::chrono::high_resolution_clock::now();
+				high_resolution_clock::time_point twbkm_start = high_resolution_clock::now();
 
 				twjkm(table, colors[j], cluster, numIters, alpha, true, mse); /*Running TIE + Weighted Batch K-Means Algorithm (isBatch == true)*/
 
 				/* Stop Timer*/
-				std::chrono::high_resolution_clock::time_point twbkm_stop = std::chrono::high_resolution_clock::now();
+				high_resolution_clock::time_point twbkm_stop = high_resolution_clock::now();
 
 				/* Execution Time*/
-				std::chrono::milliseconds twbkm_elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(twbkm_stop - twbkm_start);
+				milliseconds twbkm_elapsed = duration_cast<milliseconds>(twbkm_stop - twbkm_start);
 
 				/*Average cpu times*/
 				bkm_average_elapsed += bkm_elapsed.count();
@@ -1294,30 +1297,30 @@ main(int argc, char* argv[])
 			{
 				/*JKM Algorithm*/
 				/*Start Timer*/
-				std::chrono::high_resolution_clock::time_point jkm_start = std::chrono::high_resolution_clock::now();
+				high_resolution_clock::time_point jkm_start = high_resolution_clock::now();
 
 				jkm(img, colors[j], cluster, numIters, alpha, false, mse); /*Running Jancey K-Means Algorithm (isBatch == false)*/
 
 				/* Stop Timer*/
-				std::chrono::high_resolution_clock::time_point jkm_stop = std::chrono::high_resolution_clock::now();
+				high_resolution_clock::time_point jkm_stop = high_resolution_clock::now();
 
 				/* Execution Time*/
-				std::chrono::milliseconds jkm_elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(jkm_stop - jkm_start);
+				milliseconds jkm_elapsed = duration_cast<milliseconds>(jkm_stop - jkm_start);
 
 				/*======================================================================================================================*/
 
 				/*TWJKM Algorithm*/
 
 				/*Start Timer*/
-				std::chrono::high_resolution_clock::time_point twjkm_start = std::chrono::high_resolution_clock::now();
+				high_resolution_clock::time_point twjkm_start = high_resolution_clock::now();
 
 				twjkm(table, colors[j], cluster, numIters, alpha, false, mse); /*Running TIE + Weighted Jancey K-Means Algorithm (isBatch == false)*/
 
 				/* Stop Timer*/
-				std::chrono::high_resolution_clock::time_point twjkm_stop = std::chrono::high_resolution_clock::now();
+				high_resolution_clock::time_point twjkm_stop = high_resolution_clock::now();
 
 				/* Execution Time*/
-				std::chrono::milliseconds twjkm_elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(twjkm_stop - twjkm_start);
+				milliseconds twjkm_elapsed = duration_cast<milliseconds>(twjkm_stop - twjkm_start);
 
 				/*Average cpu times*/
 				jkm_average_elapsed += jkm_elapsed.count();
@@ -1361,85 +1364,85 @@ main(int argc, char* argv[])
 				/*TWBKM*/
 
 				/*Start Timer*/
-				std::chrono::high_resolution_clock::time_point twbkm_start1 = std::chrono::high_resolution_clock::now();
+				high_resolution_clock::time_point twbkm_start1 = high_resolution_clock::now();
 
 				twjkm(table, colors[j], cluster, numIters, alpha, true, twbkm_mse);
 
 				/* Stop Timer*/
-				std::chrono::high_resolution_clock::time_point twbkm_stop1 = std::chrono::high_resolution_clock::now();
+				high_resolution_clock::time_point twbkm_stop1 = high_resolution_clock::now();
 
 				/* Execution Time*/
-				std::chrono::milliseconds twbkm_elapsed1 = std::chrono::duration_cast<std::chrono::milliseconds>(twbkm_stop1 - twbkm_start1);
+				milliseconds twbkm_elapsed1 = duration_cast<milliseconds>(twbkm_stop1 - twbkm_start1);
 
 				/*============================================================================================================================*/
 
 				/*TWJKM alpha = 1.2*/
 				/*Start Timer*/
-				std::chrono::high_resolution_clock::time_point twjkm_start1 = std::chrono::high_resolution_clock::now();
+				high_resolution_clock::time_point twjkm_start1 = high_resolution_clock::now();
 
 				twjkm(table, colors[j], cluster, numIters, twjkm_alpha1, false, twjkm_mse1);
 
 				/* Stop Timer*/
-				std::chrono::high_resolution_clock::time_point twjkm_stop1 = std::chrono::high_resolution_clock::now();
+				high_resolution_clock::time_point twjkm_stop1 = high_resolution_clock::now();
 
 				/* Execution Time*/
-				std::chrono::milliseconds twjkm_elapsed1 = std::chrono::duration_cast<std::chrono::milliseconds>(twjkm_stop1 - twjkm_start1);
+				milliseconds twjkm_elapsed1 = duration_cast<milliseconds>(twjkm_stop1 - twjkm_start1);
 
 				/*============================================================================================================================*/
 
 				/*TWJKM alpha = 1.4*/
 				/*Start Timer*/
-				std::chrono::high_resolution_clock::time_point twjkm_start2 = std::chrono::high_resolution_clock::now();
+				high_resolution_clock::time_point twjkm_start2 = high_resolution_clock::now();
 
 				twjkm(table, colors[j], cluster, numIters, twjkm_alpha2, false, twjkm_mse2);
 
 				/* Stop Timer*/
-				std::chrono::high_resolution_clock::time_point twjkm_stop2 = std::chrono::high_resolution_clock::now();
+				high_resolution_clock::time_point twjkm_stop2 = high_resolution_clock::now();
 
 				/* Execution Time*/
-				std::chrono::milliseconds twjkm_elapsed2 = std::chrono::duration_cast<std::chrono::milliseconds>(twjkm_stop2 - twjkm_start2);
+				milliseconds twjkm_elapsed2 = duration_cast<milliseconds>(twjkm_stop2 - twjkm_start2);
 
 				/*============================================================================================================================*/
 
 				/*TWJKM alpha = 1.6*/
 				/*Start Timer*/
-				std::chrono::high_resolution_clock::time_point twjkm_start3 = std::chrono::high_resolution_clock::now();
+				high_resolution_clock::time_point twjkm_start3 = high_resolution_clock::now();
 
 				twjkm(table, colors[j], cluster, numIters, twjkm_alpha3, false, twjkm_mse3);
 
 				/* Stop Timer*/
-				std::chrono::high_resolution_clock::time_point twjkm_stop3 = std::chrono::high_resolution_clock::now();
+				high_resolution_clock::time_point twjkm_stop3 = high_resolution_clock::now();
 
 				/* Execution Time*/
-				std::chrono::milliseconds twjkm_elapsed3 = std::chrono::duration_cast<std::chrono::milliseconds>(twjkm_stop3 - twjkm_start3);
+				milliseconds twjkm_elapsed3 = duration_cast<milliseconds>(twjkm_stop3 - twjkm_start3);
 
 				/*============================================================================================================================*/
 
 				/*TWJKM alpha = 1.8*/
 				/*Start Timer*/
-				std::chrono::high_resolution_clock::time_point twjkm_start4 = std::chrono::high_resolution_clock::now();
+				high_resolution_clock::time_point twjkm_start4 = high_resolution_clock::now();
 
 				twjkm(table, colors[j], cluster, numIters, twjkm_alpha4, false, twjkm_mse4);
 
 				/* Stop Timer*/
-				std::chrono::high_resolution_clock::time_point twjkm_stop4 = std::chrono::high_resolution_clock::now();
+				high_resolution_clock::time_point twjkm_stop4 = high_resolution_clock::now();
 
 				/* Execution Time*/
-				std::chrono::milliseconds twjkm_elapsed4 = std::chrono::duration_cast<std::chrono::milliseconds>(twjkm_stop4 - twjkm_start4);
+				milliseconds twjkm_elapsed4 = duration_cast<milliseconds>(twjkm_stop4 - twjkm_start4);
 
 				/*============================================================================================================================*/
 
 				/*TWJKM alpha = 1.99 (algorithm is NOT guarnteed to converge for alpha = 2.0)*/
 				/*Start Timer*/
-				std::chrono::high_resolution_clock::time_point twjkm_start5 = std::chrono::high_resolution_clock::now();
+				high_resolution_clock::time_point twjkm_start5 = high_resolution_clock::now();
 
 				twjkm(table, colors[j], cluster, numIters, twjkm_alpha5, false, twjkm_mse5);
 
 				/* Stop Timer*/
-				std::chrono::high_resolution_clock::time_point twjkm_stop5 = std::chrono::high_resolution_clock::now();
+				high_resolution_clock::time_point twjkm_stop5 = high_resolution_clock::now();
 
 				/* Execution Time*/
-				std::chrono::milliseconds twjkm_elapsed5 = std::chrono::duration_cast<std::chrono::milliseconds>(twjkm_stop5 - twjkm_start5);
+				milliseconds twjkm_elapsed5 = duration_cast<milliseconds>(twjkm_stop5 - twjkm_start5);
 
 
 				twbkm_average_elapsed1 += twbkm_elapsed1.count();
