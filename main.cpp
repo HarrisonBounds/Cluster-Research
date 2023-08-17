@@ -1191,6 +1191,7 @@ main(int argc, char* argv[])
 	double twbkm_avg_time;
 	double twjkm_avg_time, twjkm_avg_time_alpha12, twjkm_avg_time_alpha14, twjkm_avg_time_alpha16, twjkm_avg_time_alpha18, twjkm_avg_time_alpha199;
 	high_resolution_clock::time_point start, stop; /*Variables for measuringg execution time*/
+	milliseconds elapsed_time;
 
 	RGB_Image* img;
 	RGB_Image* out_img;
@@ -1227,7 +1228,7 @@ main(int argc, char* argv[])
 				stop = high_resolution_clock::now();
 
 				/* Execution Time*/
-				milliseconds elapsed_time = duration_cast<milliseconds>(stop - start);
+				elapsed_time = duration_cast<milliseconds>(stop - start);
 
 				bkm_avg_time += elapsed_time.count();
 
@@ -1244,10 +1245,12 @@ main(int argc, char* argv[])
 				stop = high_resolution_clock::now();
 
 				/* Execution Time*/
-				milliseconds elapsed_time = duration_cast<milliseconds>(stop - start);
+				elapsed_time = duration_cast<milliseconds>(stop - start);
 				
 				twbkm_avg_time += elapsed_time.count();
 			}
+			free(cluster);
+
 			/*Getting Average Run Times*/
 			bkm_avg_time /= numReps;
 			twbkm_avg_time /= numReps;
@@ -1283,7 +1286,7 @@ main(int argc, char* argv[])
 				stop = high_resolution_clock::now();
 
 				/* Execution Time*/
-				milliseconds elapsed_time = duration_cast<milliseconds>(stop - start);
+				elapsed_time = duration_cast<milliseconds>(stop - start);
 
 				jkm_avg_time += elapsed_time.count();
 
@@ -1300,10 +1303,12 @@ main(int argc, char* argv[])
 				stop = high_resolution_clock::now();
 
 				/* Execution Time*/
-				milliseconds elapsed_time = duration_cast<milliseconds>(stop - start);
+				elapsed_time = duration_cast<milliseconds>(stop - start);
 				
 				twjkm_avg_time += elapsed_time.count();
 			}
+			free(cluster);
+
 			/*Getting Average Run Times*/
 			jkm_avg_time /= numReps;
 			twjkm_avg_time /= numReps;
@@ -1352,7 +1357,7 @@ main(int argc, char* argv[])
 				stop = high_resolution_clock::now();
 
 				/* Execution Time*/
-				milliseconds elapsed_time = duration_cast<milliseconds>(stop - start);
+				elapsed_time = duration_cast<milliseconds>(stop - start);
 
 				twbkm_avg_time += elapsed_time.count();
 
@@ -1368,7 +1373,7 @@ main(int argc, char* argv[])
 				stop = high_resolution_clock::now();
 
 				/* Execution Time*/
-				milliseconds elapsed_time = duration_cast<milliseconds>(stop - start);
+				elapsed_time = duration_cast<milliseconds>(stop - start);
 
 				twjkm_avg_time_alpha12 += elapsed_time.count();
 
@@ -1384,7 +1389,7 @@ main(int argc, char* argv[])
 				stop = high_resolution_clock::now();
 
 				/* Execution Time*/
-				milliseconds elapsed_time = duration_cast<milliseconds>(stop - start);
+				elapsed_time = duration_cast<milliseconds>(stop - start);
 
 				twjkm_avg_time_alpha14 += elapsed_time.count();
 
@@ -1400,7 +1405,7 @@ main(int argc, char* argv[])
 				stop = high_resolution_clock::now();
 
 				/* Execution Time*/
-				milliseconds elapsed_time = duration_cast<milliseconds>(stop - start);
+				elapsed_time = duration_cast<milliseconds>(stop - start);
 
 				twjkm_avg_time_alpha16 += elapsed_time.count();
 
@@ -1416,7 +1421,7 @@ main(int argc, char* argv[])
 				stop = high_resolution_clock::now();
 
 				/* Execution Time*/
-				milliseconds elapsed_time = duration_cast<milliseconds>(stop - start);
+				elapsed_time = duration_cast<milliseconds>(stop - start);
 
 				twjkm_avg_time_alpha18 += elapsed_time.count();
 
@@ -1432,10 +1437,11 @@ main(int argc, char* argv[])
 				stop = high_resolution_clock::now();
 
 				/* Execution Time*/
-				milliseconds elapsed_time = duration_cast<milliseconds>(stop - start);
+				elapsed_time = duration_cast<milliseconds>(stop - start);
 
 				twjkm_avg_time_alpha199 += elapsed_time.count();
 			}
+			free(cluster);
 
 			twbkm_avg_time /= numReps;
 			twjkm_avg_time_alpha12 /= numReps;
@@ -1457,7 +1463,6 @@ main(int argc, char* argv[])
 	}
 
 	cout << "DONE" << endl;
-	free(cluster);
 
 	return 0;
 }
