@@ -18,10 +18,11 @@ Authors: Harrison Bounds & M. Emre Celebi
 
 Contact: harrison.bounds777@gmail.com or ecelebi@uca.edu
 
-### Running main.cpp:
-- Build the cpp file to get an executable
-- Takes two command line arguments
-  - location of PPM formatted image
-  - Number of Clusters (32, 64, 128, 256)
- 
-Example: ./main.exe 4.2.03.ppm 32
+###main.cpp
+- Initial experiment for the algorithms mentioned above
+
+###main_final.cpp
+- Final experiment for the algorithms mentioned above
+
+###old.cpp
+- Original algorithms that either had bugs, could be condensed, or were no longer useful the the experiment
