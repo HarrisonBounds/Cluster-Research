@@ -18,11 +18,11 @@ Authors: Harrison Bounds & M. Emre Celebi
 
 Contact: harrison.bounds777@gmail.com or ecelebi@uca.edu
 
-###main.cpp
+### main.cpp
 - Initial experiment for the algorithms mentioned above
 
-###main_final.cpp
+### main_final.cpp
 - Final experiment for the algorithms mentioned above
 
-###old.cpp
+### old.cpp
 - Original algorithms that either had bugs, could be condensed, or were no longer useful the the experiment
