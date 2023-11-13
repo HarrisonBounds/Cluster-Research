@@ -1194,6 +1194,8 @@ main(int argc, char* argv[])
 	string jkm18 = "_jkm18_";
 	string jkm199 = "_jkm199_";
 	string prefix = "images/";
+	string outNameStr;
+	const char* outName;
 	std::chrono::duration<double> elapsed_time;
 	RGB_Image *in_img;
 	RGB_Cluster *initCenters, *copyCenters;
@@ -1214,8 +1216,8 @@ main(int argc, char* argv[])
 			string strippedFilename = filenameStr.substr(prefix.length());
 
 			//TWBKM
-			string outNameStr = out + strippedFilename + lkm + to_string(colors[j]);
-			const char* outName = outNameStr.c_str();
+			outNameStr = out + strippedFilename + lkm + to_string(colors[j]);
+			outName = outNameStr.c_str();
 			copyCenters = duplicate_centers ( initCenters, colors[j] );
 			twjkm(table, colors[j], copyCenters, &twbkm_iters, alp10, true, &twbkm_mse);
 			map_pixels(in_img, copyCenters, colors[j]);
@@ -1224,8 +1226,8 @@ main(int argc, char* argv[])
 			free (copyCenters);
 
 			/*TWJKM alpha = 1.2*/
-			string outNameStr = out + strippedFilename + jkm12 + to_string(colors[j]);
-			const char* outName = outNameStr.c_str();
+			outNameStr = out + strippedFilename + jkm12 + to_string(colors[j]);
+			outName = outNameStr.c_str();
 			copyCenters = duplicate_centers ( initCenters, colors[j] );
 			twjkm(table, colors[j], copyCenters, &twjkm_iters_12, alp12, false, &twjkm_mse_12);
 			map_pixels(in_img, copyCenters, colors[j]);
@@ -1234,8 +1236,8 @@ main(int argc, char* argv[])
 			free ( copyCenters );
 
 			/*TWJKM alpha = 1.4*/
-			string outNameStr = out + strippedFilename + jkm14 + to_string(colors[j]);
-			const char* outName = outNameStr.c_str();
+			outNameStr = out + strippedFilename + jkm14 + to_string(colors[j]);
+			outName = outNameStr.c_str();
 			copyCenters = duplicate_centers ( initCenters, colors[j] );
 			twjkm(table, colors[j], copyCenters, &twjkm_iters_14, alp14, false, &twjkm_mse_14);
 			map_pixels(in_img, copyCenters, colors[j]);
@@ -1244,8 +1246,8 @@ main(int argc, char* argv[])
 			free ( copyCenters );
 
 			/*TWJKM alpha = 1.6*/
-			string outNameStr = out + strippedFilename + jkm16 + to_string(colors[j]);
-			const char* outName = outNameStr.c_str();
+			outNameStr = out + strippedFilename + jkm16 + to_string(colors[j]);
+			outName = outNameStr.c_str();
 			copyCenters = duplicate_centers ( initCenters, colors[j] );
 			twjkm(table, colors[j], copyCenters, &twjkm_iters_16, alp16, false, &twjkm_mse_16);
 			map_pixels(in_img, copyCenters, colors[j]);
@@ -1254,8 +1256,8 @@ main(int argc, char* argv[])
 			free ( copyCenters );
 
 			/*TWJKM alpha = 1.8*/
-			string outNameStr = out + strippedFilename + jkm18 + to_string(colors[j]);
-			const char* outName = outNameStr.c_str();
+			outNameStr = out + strippedFilename + jkm18 + to_string(colors[j]);
+			outName = outNameStr.c_str();
 			copyCenters = duplicate_centers ( initCenters, colors[j] );
 			twjkm(table, colors[j], copyCenters, &twjkm_iters_18, alp18, false, &twjkm_mse_18);
 			map_pixels(in_img, copyCenters, colors[j]);
@@ -1264,8 +1266,8 @@ main(int argc, char* argv[])
 			free ( copyCenters );
 
 			/*TWJKM alpha = 1.99*/
-			string outNameStr = out + strippedFilename + jkm18 + to_string(colors[j]);
-			const char* outName = outNameStr.c_str();
+			outNameStr = out + strippedFilename + jkm18 + to_string(colors[j]);
+			outName = outNameStr.c_str();
 			copyCenters = duplicate_centers ( initCenters, colors[j] );
 			twjkm(table, colors[j], copyCenters, &twjkm_iters_199, alp199, false, &twjkm_mse_199);
 			map_pixels(in_img, copyCenters, colors[j]);
