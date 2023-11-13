@@ -1186,6 +1186,14 @@ main(int argc, char* argv[])
 	double alp10 = 1.0, alp12 = 1.2, alp14 = 1.4, alp16 = 1.6, alp18 = 1.8, alp199 = 1.99;
 	double bkm_time, jkm_time_12, jkm_time_14, jkm_time_16, jkm_time_18, jkm_time_199;
 	double twbkm_time, twjkm_time_12, twjkm_time_14, twjkm_time_16, twjkm_time_18, twjkm_time_199;
+	string out = "out_";
+	string lkm = "_lkm_";
+	string jkm12 = "_jkm12_";
+	string jkm14 = "_jkm14_";
+	string jkm16 = "_jkm16_";
+	string jkm18 = "_jkm18_";
+	string jkm199 = "_jkm199_";
+	string prefix = "images/";
 	std::chrono::duration<double> elapsed_time;
 	RGB_Image *in_img;
 	RGB_Cluster *initCenters, *copyCenters;
@@ -1200,165 +1208,240 @@ main(int argc, char* argv[])
 		table = calc_color_table(in_img);
 		for (int j = 0; j < numColors; j++)
 		{
-			bkm_time = 0.0;
-			jkm_time_12 = 0.0;
-			jkm_time_14 = 0.0;
-			jkm_time_16 = 0.0;
-			jkm_time_18 = 0.0;
-			jkm_time_199 = 0.0;
-			twbkm_time = 0.0;
-			twjkm_time_12 = 0.0;
-			twjkm_time_14 = 0.0;
-			twjkm_time_16 = 0.0;
-			twjkm_time_18 = 0.0;
-			twjkm_time_199 = 0.0;
-				
 			initCenters = maximin(in_img, colors[j]);
-			
-			for (int k = 0; k < numReps; k++)
-			{
-				/*BKM*/
-				copyCenters = duplicate_centers ( initCenters, colors[j] );
-				auto start = high_resolution_clock::now();
-				jkm(in_img, colors[j], copyCenters, &bkm_iters, alp10, true, &bkm_mse);
-				auto stop = high_resolution_clock::now();
-				elapsed_time = stop - start;
-				bkm_time += static_cast<double>(elapsed_time.count());
-				free ( copyCenters );
-				
-				/*JKM alpha = 1.2*/
-				copyCenters = duplicate_centers ( initCenters, colors[j] );
-				start = high_resolution_clock::now();
-				jkm(in_img, colors[j], copyCenters, &jkm_iters_12, alp12, false, &jkm_mse_12); 
-				stop = high_resolution_clock::now();
-				elapsed_time = stop - start;
-				jkm_time_12 += static_cast<double>(elapsed_time.count());
-				free ( copyCenters );
-				
-				/*JKM alpha = 1.4*/
-				copyCenters = duplicate_centers ( initCenters, colors[j] );
-				start = high_resolution_clock::now();
-				jkm(in_img, colors[j], copyCenters, &jkm_iters_14, alp14, false, &jkm_mse_14); 
-				stop = high_resolution_clock::now();
-				elapsed_time = stop - start;
-				jkm_time_14 += static_cast<double>(elapsed_time.count());
-				free ( copyCenters );
-				
-				/*JKM alpha = 1.6*/
-				copyCenters = duplicate_centers ( initCenters, colors[j] );
-				start = high_resolution_clock::now();
-				jkm(in_img, colors[j], copyCenters, &jkm_iters_16, alp16, false, &jkm_mse_16); 
-				stop = high_resolution_clock::now();
-				elapsed_time = stop - start;
-				jkm_time_16 += static_cast<double>(elapsed_time.count());
-				free ( copyCenters );
-				
-				/*JKM alpha = 1.8*/
-				copyCenters = duplicate_centers ( initCenters, colors[j] );
-				start = high_resolution_clock::now();
-				jkm(in_img, colors[j], copyCenters, &jkm_iters_18, alp18, false, &jkm_mse_18); 
-				stop = high_resolution_clock::now();
-				elapsed_time = stop - start;
-				jkm_time_18 += static_cast<double>(elapsed_time.count());
-				free ( copyCenters );
-				
-				/*JKM alpha = 1.99*/
-				copyCenters = duplicate_centers ( initCenters, colors[j] );
-				start = high_resolution_clock::now();
-				jkm(in_img, colors[j], copyCenters, &jkm_iters_199, alp199, false, &jkm_mse_199); 
-				stop = high_resolution_clock::now();
-				elapsed_time = stop - start;
-				jkm_time_199 += static_cast<double>(elapsed_time.count());
-				free ( copyCenters );
 
-				/*TWBKM*/
-				copyCenters = duplicate_centers ( initCenters, colors[j] );
-				start = high_resolution_clock::now();
-				twjkm(table, colors[j], copyCenters, &twbkm_iters, alp10, true, &twbkm_mse);
-				stop = high_resolution_clock::now();
-				elapsed_time = stop - start;
-				twbkm_time += static_cast<double>(elapsed_time.count());
-				free ( copyCenters );
+			string filenameStr = string(filenames[i]);
+			string strippedFilename = filenameStr.substr(prefix.length());
 
-				/*TWJKM alpha = 1.2*/
-				copyCenters = duplicate_centers ( initCenters, colors[j] );
-				start = high_resolution_clock::now();
-				twjkm(table, colors[j], copyCenters, &twjkm_iters_12, alp12, false, &twjkm_mse_12);
-				stop = high_resolution_clock::now();
-				elapsed_time = stop - start;
-				twjkm_time_12 += static_cast<double>(elapsed_time.count());
-				free ( copyCenters );
+			//TWBKM
+			string outNameStr = out + strippedFilename + lkm + to_string(colors[j]);
+			const char* outName = outNameStr.c_str();
+			copyCenters = duplicate_centers ( initCenters, colors[j] );
+			twjkm(table, colors[j], copyCenters, &twbkm_iters, alp10, true, &twbkm_mse);
+			map_pixels(in_img, copyCenters, colors[j]);
+			write_PPM(in_img, outName);
+			free_image(in_img);
+			free (copyCenters);
 
-				/*TWJKM alpha = 1.4*/
-				copyCenters = duplicate_centers ( initCenters, colors[j] );
-				start = high_resolution_clock::now();
-				twjkm(table, colors[j], copyCenters, &twjkm_iters_14, alp14, false, &twjkm_mse_14);
-				stop = high_resolution_clock::now();
-				elapsed_time = stop - start;
-				twjkm_time_14 += static_cast<double>(elapsed_time.count());
-				free ( copyCenters );
+			/*TWJKM alpha = 1.2*/
+			string outNameStr = out + strippedFilename + jkm12 + to_string(colors[j]);
+			const char* outName = outNameStr.c_str();
+			copyCenters = duplicate_centers ( initCenters, colors[j] );
+			twjkm(table, colors[j], copyCenters, &twjkm_iters_12, alp12, false, &twjkm_mse_12);
+			map_pixels(in_img, copyCenters, colors[j]);
+			write_PPM(in_img, outName);
+			free_image(in_img);
+			free ( copyCenters );
 
-				/*TWJKM alpha = 1.6*/
-				copyCenters = duplicate_centers ( initCenters, colors[j] );
-				start = high_resolution_clock::now();
-				twjkm(table, colors[j], copyCenters, &twjkm_iters_16, alp16, false, &twjkm_mse_16);
-				stop = high_resolution_clock::now();
-				elapsed_time = stop - start;
-				twjkm_time_16 += static_cast<double>(elapsed_time.count());
-				free ( copyCenters );
+			/*TWJKM alpha = 1.4*/
+			string outNameStr = out + strippedFilename + jkm14 + to_string(colors[j]);
+			const char* outName = outNameStr.c_str();
+			copyCenters = duplicate_centers ( initCenters, colors[j] );
+			twjkm(table, colors[j], copyCenters, &twjkm_iters_14, alp14, false, &twjkm_mse_14);
+			map_pixels(in_img, copyCenters, colors[j]);
+			write_PPM(in_img, outName);
+			free_image(in_img);
+			free ( copyCenters );
 
-				/*TWJKM alpha = 1.8*/
-				copyCenters = duplicate_centers ( initCenters, colors[j] );
-				start = high_resolution_clock::now();
-				twjkm(table, colors[j], copyCenters, &twjkm_iters_18, alp18, false, &twjkm_mse_18);
-				stop = high_resolution_clock::now();
-				elapsed_time = stop - start;
-				twjkm_time_18 += static_cast<double>(elapsed_time.count());
-				free ( copyCenters );
+			/*TWJKM alpha = 1.6*/
+			string outNameStr = out + strippedFilename + jkm16 + to_string(colors[j]);
+			const char* outName = outNameStr.c_str();
+			copyCenters = duplicate_centers ( initCenters, colors[j] );
+			twjkm(table, colors[j], copyCenters, &twjkm_iters_16, alp16, false, &twjkm_mse_16);
+			map_pixels(in_img, copyCenters, colors[j]);
+			write_PPM(in_img, outName);
+			free_image(in_img);
+			free ( copyCenters );
 
-				/*TWJKM alpha = 1.99*/
-				copyCenters = duplicate_centers ( initCenters, colors[j] );
-				start = high_resolution_clock::now();
-				twjkm(table, colors[j], copyCenters, &twjkm_iters_199, alp199, false, &twjkm_mse_199);
-				stop = high_resolution_clock::now();
-				elapsed_time = stop - start;
-				twjkm_time_199 += static_cast<double>(elapsed_time.count());
-				free ( copyCenters );
-			}
+			/*TWJKM alpha = 1.8*/
+			string outNameStr = out + strippedFilename + jkm18 + to_string(colors[j]);
+			const char* outName = outNameStr.c_str();
+			copyCenters = duplicate_centers ( initCenters, colors[j] );
+			twjkm(table, colors[j], copyCenters, &twjkm_iters_18, alp18, false, &twjkm_mse_18);
+			map_pixels(in_img, copyCenters, colors[j]);
+			write_PPM(in_img, outName);
+			free_image(in_img);
+			free ( copyCenters );
 
-			bkm_time /= numReps;
-			jkm_time_12 /= numReps;
-			jkm_time_14 /= numReps;
-			jkm_time_16 /= numReps;
-			jkm_time_18 /= numReps;
-			jkm_time_199 /= numReps;
-			twbkm_time /= numReps;
-			twjkm_time_12 /= numReps;
-			twjkm_time_14 /= numReps;
-			twjkm_time_16 /= numReps;
-			twjkm_time_18 /= numReps;
-			twjkm_time_199 /= numReps;
+			/*TWJKM alpha = 1.99*/
+			string outNameStr = out + strippedFilename + jkm18 + to_string(colors[j]);
+			const char* outName = outNameStr.c_str();
+			copyCenters = duplicate_centers ( initCenters, colors[j] );
+			twjkm(table, colors[j], copyCenters, &twjkm_iters_199, alp199, false, &twjkm_mse_199);
+			map_pixels(in_img, copyCenters, colors[j]);
+			write_PPM(in_img, outName);
+			free_image(in_img);
+			free ( copyCenters );
 
-			/*OUTPUT*/
-			cout << filenames[i] << ", " << colors[j] << ", " 
-			<< "BKM"      << ", " << bkm_mse       << ", " << bkm_iters       << ", " << bkm_time       << ", " 
-			<< "JKM12"    << ", " << jkm_mse_12    << ", " << jkm_iters_12    << ", " << jkm_time_12    << ", "
-			<< "JKM14"    << ", " << jkm_mse_14    << ", " << jkm_iters_14    << ", " << jkm_time_14    << ", "
-			<< "JKM16"    << ", " << jkm_mse_16    << ", " << jkm_iters_16    << ", " << jkm_time_16    << ", "
-			<< "JKM18"    << ", " << jkm_mse_18    << ", " << jkm_iters_18    << ", " << jkm_time_18    << ", "
-			<< "JKM199"   << ", " << jkm_mse_199   << ", " << jkm_iters_199   << ", " << jkm_time_199   << ", "
-			<< "TWBKM"    << ", " << twbkm_mse     << ", " << twbkm_iters     << ", " << twbkm_time     << ", " 
-			<< "TWJKM12"  << ", " << twjkm_mse_12  << ", " << twjkm_iters_12  << ", " << twjkm_time_12  << ", "
-			<< "TWJKM14"  << ", " << twjkm_mse_14  << ", " << twjkm_iters_14  << ", " << twjkm_time_14  << ", "
-			<< "TWJKM16"  << ", " << twjkm_mse_16  << ", " << twjkm_iters_16  << ", " << twjkm_time_16  << ", "
-			<< "TWJKM18"  << ", " << twjkm_mse_18  << ", " << twjkm_iters_18  << ", " << twjkm_time_18  << ", "
-			<< "TWJKM199" << ", " << twjkm_mse_199 << ", " << twjkm_iters_199 << ", " << twjkm_time_199 << endl;
-			
-			free ( initCenters );
 		}
-		free_image(in_img);
-		free_table(table);
 	}
+
+	// for (int i  = 0; i < numImages; i++)
+	// {
+	// 	/* Read Image*/
+	// 	in_img = read_PPM(filenames[i]);
+	// 	table = calc_color_table(in_img);
+	// 	for (int j = 0; j < numColors; j++)
+	// 	{
+	// 		bkm_time = 0.0;
+	// 		jkm_time_12 = 0.0;
+	// 		jkm_time_14 = 0.0;
+	// 		jkm_time_16 = 0.0;
+	// 		jkm_time_18 = 0.0;
+	// 		jkm_time_199 = 0.0;
+	// 		twbkm_time = 0.0;
+	// 		twjkm_time_12 = 0.0;
+	// 		twjkm_time_14 = 0.0;
+	// 		twjkm_time_16 = 0.0;
+	// 		twjkm_time_18 = 0.0;
+	// 		twjkm_time_199 = 0.0;
+				
+	// 		initCenters = maximin(in_img, colors[j]);
+			
+	// 		for (int k = 0; k < numReps; k++)
+	// 		{
+	// 			/*BKM*/
+	// 			copyCenters = duplicate_centers ( initCenters, colors[j] );
+	// 			auto start = high_resolution_clock::now();
+	// 			jkm(in_img, colors[j], copyCenters, &bkm_iters, alp10, true, &bkm_mse);
+	// 			auto stop = high_resolution_clock::now();
+	// 			elapsed_time = stop - start;
+	// 			bkm_time += static_cast<double>(elapsed_time.count());
+	// 			free ( copyCenters );
+				
+	// 			/*JKM alpha = 1.2*/
+	// 			copyCenters = duplicate_centers ( initCenters, colors[j] );
+	// 			start = high_resolution_clock::now();
+	// 			jkm(in_img, colors[j], copyCenters, &jkm_iters_12, alp12, false, &jkm_mse_12); 
+	// 			stop = high_resolution_clock::now();
+	// 			elapsed_time = stop - start;
+	// 			jkm_time_12 += static_cast<double>(elapsed_time.count());
+	// 			free ( copyCenters );
+				
+	// 			/*JKM alpha = 1.4*/
+	// 			copyCenters = duplicate_centers ( initCenters, colors[j] );
+	// 			start = high_resolution_clock::now();
+	// 			jkm(in_img, colors[j], copyCenters, &jkm_iters_14, alp14, false, &jkm_mse_14); 
+	// 			stop = high_resolution_clock::now();
+	// 			elapsed_time = stop - start;
+	// 			jkm_time_14 += static_cast<double>(elapsed_time.count());
+	// 			free ( copyCenters );
+				
+	// 			/*JKM alpha = 1.6*/
+	// 			copyCenters = duplicate_centers ( initCenters, colors[j] );
+	// 			start = high_resolution_clock::now();
+	// 			jkm(in_img, colors[j], copyCenters, &jkm_iters_16, alp16, false, &jkm_mse_16); 
+	// 			stop = high_resolution_clock::now();
+	// 			elapsed_time = stop - start;
+	// 			jkm_time_16 += static_cast<double>(elapsed_time.count());
+	// 			free ( copyCenters );
+				
+	// 			/*JKM alpha = 1.8*/
+	// 			copyCenters = duplicate_centers ( initCenters, colors[j] );
+	// 			start = high_resolution_clock::now();
+	// 			jkm(in_img, colors[j], copyCenters, &jkm_iters_18, alp18, false, &jkm_mse_18); 
+	// 			stop = high_resolution_clock::now();
+	// 			elapsed_time = stop - start;
+	// 			jkm_time_18 += static_cast<double>(elapsed_time.count());
+	// 			free ( copyCenters );
+				
+	// 			/*JKM alpha = 1.99*/
+	// 			copyCenters = duplicate_centers ( initCenters, colors[j] );
+	// 			start = high_resolution_clock::now();
+	// 			jkm(in_img, colors[j], copyCenters, &jkm_iters_199, alp199, false, &jkm_mse_199); 
+	// 			stop = high_resolution_clock::now();
+	// 			elapsed_time = stop - start;
+	// 			jkm_time_199 += static_cast<double>(elapsed_time.count());
+	// 			free ( copyCenters );
+
+	// 			/*TWBKM*/
+	// 			copyCenters = duplicate_centers ( initCenters, colors[j] );
+	// 			start = high_resolution_clock::now();
+	// 			twjkm(table, colors[j], copyCenters, &twbkm_iters, alp10, true, &twbkm_mse);
+	// 			stop = high_resolution_clock::now();
+	// 			elapsed_time = stop - start;
+	// 			twbkm_time += static_cast<double>(elapsed_time.count());
+	// 			free ( copyCenters );
+
+	// 			/*TWJKM alpha = 1.2*/
+	// 			copyCenters = duplicate_centers ( initCenters, colors[j] );
+	// 			start = high_resolution_clock::now();
+	// 			twjkm(table, colors[j], copyCenters, &twjkm_iters_12, alp12, false, &twjkm_mse_12);
+	// 			stop = high_resolution_clock::now();
+	// 			elapsed_time = stop - start;
+	// 			twjkm_time_12 += static_cast<double>(elapsed_time.count());
+	// 			free ( copyCenters );
+
+	// 			/*TWJKM alpha = 1.4*/
+	// 			copyCenters = duplicate_centers ( initCenters, colors[j] );
+	// 			start = high_resolution_clock::now();
+	// 			twjkm(table, colors[j], copyCenters, &twjkm_iters_14, alp14, false, &twjkm_mse_14);
+	// 			stop = high_resolution_clock::now();
+	// 			elapsed_time = stop - start;
+	// 			twjkm_time_14 += static_cast<double>(elapsed_time.count());
+	// 			free ( copyCenters );
+
+	// 			/*TWJKM alpha = 1.6*/
+	// 			copyCenters = duplicate_centers ( initCenters, colors[j] );
+	// 			start = high_resolution_clock::now();
+	// 			twjkm(table, colors[j], copyCenters, &twjkm_iters_16, alp16, false, &twjkm_mse_16);
+	// 			stop = high_resolution_clock::now();
+	// 			elapsed_time = stop - start;
+	// 			twjkm_time_16 += static_cast<double>(elapsed_time.count());
+	// 			free ( copyCenters );
+
+	// 			/*TWJKM alpha = 1.8*/
+	// 			copyCenters = duplicate_centers ( initCenters, colors[j] );
+	// 			start = high_resolution_clock::now();
+	// 			twjkm(table, colors[j], copyCenters, &twjkm_iters_18, alp18, false, &twjkm_mse_18);
+	// 			stop = high_resolution_clock::now();
+	// 			elapsed_time = stop - start;
+	// 			twjkm_time_18 += static_cast<double>(elapsed_time.count());
+	// 			free ( copyCenters );
+
+	// 			/*TWJKM alpha = 1.99*/
+	// 			copyCenters = duplicate_centers ( initCenters, colors[j] );
+	// 			start = high_resolution_clock::now();
+	// 			twjkm(table, colors[j], copyCenters, &twjkm_iters_199, alp199, false, &twjkm_mse_199);
+	// 			stop = high_resolution_clock::now();
+	// 			elapsed_time = stop - start;
+	// 			twjkm_time_199 += static_cast<double>(elapsed_time.count());
+	// 			free ( copyCenters );
+	// 		}
+
+	// 		bkm_time /= numReps;
+	// 		jkm_time_12 /= numReps;
+	// 		jkm_time_14 /= numReps;
+	// 		jkm_time_16 /= numReps;
+	// 		jkm_time_18 /= numReps;
+	// 		jkm_time_199 /= numReps;
+	// 		twbkm_time /= numReps;
+	// 		twjkm_time_12 /= numReps;
+	// 		twjkm_time_14 /= numReps;
+	// 		twjkm_time_16 /= numReps;
+	// 		twjkm_time_18 /= numReps;
+	// 		twjkm_time_199 /= numReps;
+
+	// 		/*OUTPUT*/
+	// 		cout << filenames[i] << ", " << colors[j] << ", " 
+	// 		<< "BKM"      << ", " << bkm_mse       << ", " << bkm_iters       << ", " << bkm_time       << ", " 
+	// 		<< "JKM12"    << ", " << jkm_mse_12    << ", " << jkm_iters_12    << ", " << jkm_time_12    << ", "
+	// 		<< "JKM14"    << ", " << jkm_mse_14    << ", " << jkm_iters_14    << ", " << jkm_time_14    << ", "
+	// 		<< "JKM16"    << ", " << jkm_mse_16    << ", " << jkm_iters_16    << ", " << jkm_time_16    << ", "
+	// 		<< "JKM18"    << ", " << jkm_mse_18    << ", " << jkm_iters_18    << ", " << jkm_time_18    << ", "
+	// 		<< "JKM199"   << ", " << jkm_mse_199   << ", " << jkm_iters_199   << ", " << jkm_time_199   << ", "
+	// 		<< "TWBKM"    << ", " << twbkm_mse     << ", " << twbkm_iters     << ", " << twbkm_time     << ", " 
+	// 		<< "TWJKM12"  << ", " << twjkm_mse_12  << ", " << twjkm_iters_12  << ", " << twjkm_time_12  << ", "
+	// 		<< "TWJKM14"  << ", " << twjkm_mse_14  << ", " << twjkm_iters_14  << ", " << twjkm_time_14  << ", "
+	// 		<< "TWJKM16"  << ", " << twjkm_mse_16  << ", " << twjkm_iters_16  << ", " << twjkm_time_16  << ", "
+	// 		<< "TWJKM18"  << ", " << twjkm_mse_18  << ", " << twjkm_iters_18  << ", " << twjkm_time_18  << ", "
+	// 		<< "TWJKM199" << ", " << twjkm_mse_199 << ", " << twjkm_iters_199 << ", " << twjkm_time_199 << endl;
+			
+	// 		free ( initCenters );
+	// 	}
+	// 	free_image(in_img);
+	// 	free_table(table);
+	// }
 
 	cout << "DONE" << endl;
 
