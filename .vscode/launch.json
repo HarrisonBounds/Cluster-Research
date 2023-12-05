@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "e:/Cluster-Research",
-      "program": "e:/Cluster-Research/build/Debug/outDebug",
+      "cwd": "e:/Cluster-Research-JKM",
+      "program": "e:/Cluster-Research-JKM/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
